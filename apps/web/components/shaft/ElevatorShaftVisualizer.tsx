@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   ArrowUp, 
   ArrowDown, 
@@ -11,7 +11,6 @@ import {
   Lock, 
   ShieldAlert, 
   Zap,
-  Compass,
   Layers,
   Volume2
 } from 'lucide-react';
@@ -36,33 +35,61 @@ export function ElevatorShaftVisualizer({
   const [viewMode, setViewMode] = useState<'ISOMETRIC' | 'FACADE'>('ISOMETRIC');
 
   // Generate list of floors from top to bottom based on actual data
-  const floorList = floors && floors.length > 0
-    ? [...floors].sort((a, b) => b.floorNumber - a.floorNumber)
-    : (() => {
-        const list = [];
-        for (let f = maxFloor; f >= minFloor; f--) {
-          if (f === 0) continue;
-          list.push({
-            floorNumber: f,
-            displayName: f < 0 ? `B${Math.abs(f)}` : f === 1 ? 'G' : `F${f}`,
-          });
-        }
-        return list;
-      })();
+  const floorList = useMemo(() => {
+    if (floors && floors.length > 0) {
+      return [...floors].sort((a, b) => b.floorNumber - a.floorNumber);
+    }
+    const list = [];
+    for (let f = maxFloor; f >= minFloor; f--) {
+      if (f === 0) continue;
+      list.push({
+        floorNumber: f,
+        displayName: f < 0 ? `B${Math.abs(f)}` : f === 1 ? 'G' : `F${f}`,
+      });
+    }
+    return list;
+  }, [floors, minFloor, maxFloor]);
 
   const numFloors = floorList.length;
   const currentFloorRound = Math.round(telemetry.floor);
 
-  // Vertical position calculation (percentage from bottom of shaft)
-  const effectiveMin = floorList[floorList.length - 1]?.floorNumber ?? minFloor;
-  const effectiveMax = floorList[0]?.floorNumber ?? maxFloor;
-  const clampedFloor = Math.max(effectiveMin, Math.min(effectiveMax, telemetry.floor));
-  const floorSpan = effectiveMax - effectiveMin || 1;
-  const carBottomPct = ((clampedFloor - effectiveMin) / floorSpan) * 80 + 3;
-  // Counterweight position is mathematically inverted
-  const counterweightBottomPct = 84 - ((clampedFloor - effectiveMin) / floorSpan) * 80;
+  // Sorted ascending floors for fractional interpolation
+  const sortedAsc = useMemo(() => {
+    return [...floorList].sort((a, b) => a.floorNumber - b.floorNumber);
+  }, [floorList]);
 
-  // Door opening state
+  const effectiveMin = sortedAsc[0]?.floorNumber ?? minFloor;
+  const effectiveMax = sortedAsc[sortedAsc.length - 1]?.floorNumber ?? maxFloor;
+
+  // Exact fractional bottom index (0 = bottom row, numFloors - 1 = top row)
+  const getFractionalBottomIndex = (floor: number): number => {
+    const clamped = Math.max(effectiveMin, Math.min(effectiveMax, floor));
+    for (let i = 0; i < sortedAsc.length; i++) {
+      if (sortedAsc[i].floorNumber === clamped) return i;
+      if (sortedAsc[i].floorNumber < clamped && i + 1 < sortedAsc.length && sortedAsc[i + 1].floorNumber > clamped) {
+        const lower = sortedAsc[i].floorNumber;
+        const upper = sortedAsc[i + 1].floorNumber;
+        const frac = (clamped - lower) / (upper - lower);
+        return i + frac;
+      }
+    }
+    return 0;
+  };
+
+  const carBottomIndex = getFractionalBottomIndex(telemetry.floor);
+  const rowHeightPct = 100 / numFloors;
+  // Car height: scaled to 86% of a single floor row so it never overlaps adjacent floors!
+  const carHeightPct = rowHeightPct * 0.86;
+  const carCenterPct = (carBottomIndex + 0.5) * rowHeightPct;
+  const carBottomPct = Math.max(0.4, Math.min(100 - carHeightPct - 0.4, carCenterPct - (carHeightPct / 2)));
+
+  // Counterweight position is mathematically inverted
+  const cwHeightPct = rowHeightPct * 0.90;
+  const cwBottomIndex = (numFloors - 1) - carBottomIndex;
+  const cwCenterPct = (cwBottomIndex + 0.5) * rowHeightPct;
+  const counterweightBottomPct = Math.max(0.4, Math.min(100 - cwHeightPct - 0.4, cwCenterPct - (cwHeightPct / 2)));
+
+  // Door opening percentage
   const isDoorOpen = telemetry.doorState === 'OPEN' || telemetry.doorState === 'OPENING';
   const doorWidthPct = telemetry.doorState === 'OPEN' ? 0 : telemetry.doorState === 'CLOSING' ? 35 : telemetry.doorState === 'OPENING' ? 15 : 50;
 
@@ -149,195 +176,210 @@ export function ElevatorShaftVisualizer({
         </div>
       </div>
 
-      {/* Main Architectural Building Cross-Section */}
-      <div className="relative w-full h-[580px] bg-[#FAFBFD] rounded-[8px] border border-[#DCDFEA] p-3 flex overflow-hidden">
-        {/* Left Building Side Column (#7E8BAB) with Floor Chips */}
-        <div className="w-14 sm:w-16 bg-[#7E8BAB] rounded-l flex flex-col justify-between py-2 px-1.5 z-20 shadow-sm border-r border-[#8D9AB8]">
-          {floorList.map((f) => {
-            const isCarHere = currentFloorRound === f.floorNumber;
-            const isTarget = telemetry.targetFloor === f.floorNumber;
-
-            return (
-              <button
-                key={f.floorNumber}
-                onClick={() => handleFloorClick(f.floorNumber)}
-                title={`Call elevator to Floor ${f.displayName}`}
-                className={`w-full h-7 rounded flex items-center justify-center font-mono text-xs transition-all ${
-                  isCarHere
-                    ? 'bg-[#433690] text-white shadow-sm ring-2 ring-white/50 font-bold scale-105'
-                    : isTarget
-                    ? 'bg-white text-[#433690] border-2 border-[#433690] font-bold'
-                    : 'bg-[#4E69B4] hover:bg-[#3D5699] text-white font-medium'
+      {/* Main Architectural Building Cross-Section (Penthouse Deck + Hoistway) */}
+      <div className="relative w-full h-[620px] bg-[#FAFBFD] rounded-[8px] border border-[#DCDFEA] p-2 sm:p-2.5 flex flex-col overflow-hidden">
+        
+        {/* Overhead Machine Room Penthouse Deck (Sits ABOVE the top floor, never collides!) */}
+        {viewMode === 'ISOMETRIC' && (
+          <div className="h-10 bg-[#1E2232] border-b-2 border-[#433690] rounded-t-[6px] flex items-center justify-between px-3 sm:px-4 text-[10px] font-mono text-slate-300 flex-shrink-0 z-20 shadow-xs mb-0">
+            <div className="flex items-center space-x-2 min-w-0 truncate">
+              {/* Motorized Spinning Traction Sheave */}
+              <div
+                className={`h-5 w-5 rounded-full border-2 border-slate-400 bg-slate-700 flex items-center justify-center flex-shrink-0 ${
+                  telemetry.direction !== 'STATIONARY' ? 'animate-spin' : ''
                 }`}
+                style={{ animationDuration: '0.8s' }}
               >
-                {f.displayName}
-              </button>
-            );
-          })}
-        </div>
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+              </div>
+              <span className="font-bold text-white tracking-wide truncate">MACHINE ROOM // TRACTION SHEAVE</span>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+              <span className="hidden sm:inline text-slate-400 text-[9px]">GEARLESS PMSM</span>
+              <span className="text-[#15804D] font-bold">STATOR: {telemetry.motorTempCelsius}&deg;C</span>
+            </div>
+          </div>
+        )}
 
-        {/* Central Building Facade & Hoistway */}
-        <div className="relative flex-1 bg-[#F8F5EC] border-y border-[#8D9AB8] flex flex-col justify-between overflow-hidden">
-          {/* Overhead Machine Room Deck in Isometric mode */}
-          {viewMode === 'ISOMETRIC' && (
-            <div className="absolute top-0 left-0 right-0 h-10 bg-[#1E2232] border-b-2 border-[#433690] z-25 flex items-center justify-between px-4 text-[10px] font-mono text-slate-300">
-              <div className="flex items-center space-x-2">
-                {/* Motorized Spinning Traction Sheave */}
+        {/* Structural Hoistway Body: 3 Perfectly Aligned Columns (Left buttons, Center shaft, Right specs) */}
+        <div className={`relative flex-1 flex overflow-hidden border border-[#8D9AB8] ${viewMode === 'ISOMETRIC' ? 'rounded-b-[6px]' : 'rounded-[6px]'} bg-[#F8F5EC]`}>
+          
+          {/* Left Column: Floor Buttons (1-to-1 matching row height with center landing doors) */}
+          <div className="w-12 sm:w-16 bg-[#7E8BAB] flex flex-col border-r border-[#8D9AB8] z-20 shadow-xs">
+            {floorList.map((f) => {
+              const isCarHere = currentFloorRound === f.floorNumber;
+              const isTarget = telemetry.targetFloor === f.floorNumber;
+
+              return (
                 <div
-                  className={`h-6 w-6 rounded-full border-2 border-slate-400 bg-slate-700 flex items-center justify-center ${
-                    telemetry.direction !== 'STATIONARY' ? 'animate-spin' : ''
-                  }`}
-                  style={{ animationDuration: '0.8s' }}
+                  key={f.floorNumber}
+                  className="flex-1 w-full flex items-center justify-center p-0.5 border-b border-[#8D9AB8]/40 last:border-b-0"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                  <button
+                    onClick={() => handleFloorClick(f.floorNumber)}
+                    title={`Call elevator to Floor ${f.displayName}`}
+                    className={`w-full h-full max-h-[26px] rounded flex items-center justify-center font-mono text-[10px] sm:text-xs font-bold transition-all ${
+                      isCarHere
+                        ? 'bg-[#433690] text-white shadow-sm ring-1 ring-white/80'
+                        : isTarget
+                        ? 'bg-white text-[#433690] border-2 border-[#433690]'
+                        : 'bg-[#4E69B4] hover:bg-[#3D5699] text-white font-medium'
+                    }`}
+                  >
+                    {f.displayName}
+                  </button>
                 </div>
-                <span className="font-bold text-white">MACHINE ROOM // TRACTION SHEAVE</span>
-              </div>
-              <span className="text-[#15804D] font-bold">STATOR: {telemetry.motorTempCelsius}°C</span>
-            </div>
-          )}
+              );
+            })}
+          </div>
 
-          {/* Repeated Floor Slabs, Windows & Steel Landing Doors */}
-          {floorList.map((f) => (
-            <div
-              key={f.floorNumber}
-              className="relative flex-1 w-full border-b border-[#8D9AB8] flex items-center justify-between px-3"
-              style={{ minHeight: `${100 / numFloors}%` }}
-            >
-              {/* Left Window Bay */}
-              <div className="flex-1 h-full flex items-center space-x-2 opacity-70">
-                <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
-                <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
-                <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
-              </div>
-
-              {/* Steel Landing Door in the Middle */}
-              <div className="w-20 sm:w-28 h-4/5 bg-gradient-to-r from-[#CBD5E1] via-[#E2E8F0] to-[#CBD5E1] border border-[#94A3B8] rounded-[2px] shadow-xs flex items-center justify-center relative overflow-hidden z-10">
-                <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-[#64748B]/60 -translate-x-1/2"></div>
-                <span className="text-[9px] font-mono font-bold text-[#475569] bg-white/70 px-1 rounded z-10">
-                  {f.displayName}
-                </span>
-              </div>
-
-              {/* Right Window Bay */}
-              <div className="flex-1 h-full flex items-center justify-end space-x-2 opacity-70">
-                <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
-                <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
-                <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
-              </div>
-            </div>
-          ))}
-
-          {/* Steel Hoist Wire Ropes */}
-          {viewMode === 'ISOMETRIC' && (
-            <>
-              {/* Car Hoist Cables */}
+          {/* Central Hoistway Column: Floor Slabs, Guide Rails, Wire Ropes, Counterweight & Car */}
+          <div className="relative flex-1 bg-[#F8F5EC] flex flex-col overflow-hidden">
+            
+            {/* Repeated Floor Slabs, Window Bays & Steel Landing Doors */}
+            {floorList.map((f) => (
               <div
-                className="absolute top-10 w-0.5 bg-slate-500 pointer-events-none z-15"
-                style={{ left: '46%', bottom: `${carBottomPct + 10}%` }}
-              ></div>
-              <div
-                className="absolute top-10 w-0.5 bg-slate-500 pointer-events-none z-15"
-                style={{ left: '50%', bottom: `${carBottomPct + 10}%` }}
-              ></div>
-
-              {/* Counterweight Cables */}
-              <div
-                className="absolute top-10 w-0.5 bg-slate-500 pointer-events-none z-15"
-                style={{ right: '24%', bottom: `${counterweightBottomPct + 8}%` }}
-              ></div>
-
-              {/* THE COUNTERWEIGHT (Moves vertically opposite to the car) */}
-              <div
-                className="absolute w-5 h-12 bg-gradient-to-b from-slate-500 to-slate-700 rounded-[2px] border border-slate-800 shadow-sm z-20 transition-all duration-700 ease-in-out flex flex-col justify-between p-0.5"
-                style={{
-                  right: '22%',
-                  bottom: `${counterweightBottomPct}%`,
-                }}
-                title="Counterweight Assembly"
+                key={f.floorNumber}
+                className="relative flex-1 w-full border-b border-[#8D9AB8]/60 last:border-b-0 flex items-center justify-between px-2 sm:px-3"
               >
-                <div className="h-0.5 bg-slate-300 rounded"></div>
-                <div className="h-0.5 bg-slate-300 rounded"></div>
-                <div className="h-0.5 bg-slate-300 rounded"></div>
+                {/* Left Window Bay */}
+                <div className="flex-1 h-full flex items-center space-x-1.5 opacity-50">
+                  <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
+                  <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
+                  <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
+                </div>
+
+                {/* Steel Landing Door in the Middle */}
+                <div className="w-16 sm:w-24 h-[75%] bg-gradient-to-r from-[#CBD5E1] via-[#E2E8F0] to-[#CBD5E1] border border-[#94A3B8] rounded-[2px] shadow-2xs flex items-center justify-center relative overflow-hidden z-10">
+                  <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-[#64748B]/60 -translate-x-1/2"></div>
+                  <span className="text-[9px] font-mono font-bold text-[#475569] bg-white/80 px-1 rounded z-10">
+                    {f.displayName}
+                  </span>
+                </div>
+
+                {/* Right Window Bay */}
+                <div className="flex-1 h-full flex items-center justify-end space-x-1.5 opacity-50">
+                  <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
+                  <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
+                  <div className="w-px h-3/4 bg-[#8D9AB8]"></div>
+                </div>
               </div>
-            </>
-          )}
+            ))}
 
-          {/* Central Vertical Shaft Hoistway Guide Rails */}
-          <div className="absolute top-0 bottom-0 left-1/2 w-28 sm:w-36 -translate-x-1/2 pointer-events-none z-10">
-            <div className="absolute top-0 bottom-0 left-1 w-0.5 bg-[#64748B]/50"></div>
-            <div className="absolute top-0 bottom-0 right-1 w-0.5 bg-[#64748B]/50"></div>
-          </div>
+            {/* Central Vertical Hoistway Guide Rails */}
+            <div className="absolute top-0 bottom-0 left-1/2 w-24 sm:w-32 -translate-x-1/2 pointer-events-none z-10">
+              <div className="absolute top-0 bottom-0 left-1 w-0.5 bg-[#64748B]/50"></div>
+              <div className="absolute top-0 bottom-0 right-1 w-0.5 bg-[#64748B]/50"></div>
+            </div>
 
-          {/* THE ELEVATOR CAR (Warm Glowing Box #FFF2CF, Amber Border #F5A524) */}
-          <div
-            className="absolute left-1/2 -translate-x-1/2 w-24 sm:w-32 h-16 sm:h-20 bg-[#FFF2CF] border-2 border-[#F5A524] rounded-[4px] shadow-[0_0_20px_rgba(245,165,36,0.35)] flex flex-col justify-between transition-all duration-1000 ease-in-out z-30"
-            style={{ bottom: `${carBottomPct}%` }}
-          >
-            {/* Dark Roof Display showing Direction Arrow and Floor */}
-            <div className="bg-[#1B2236] text-white px-2 py-0.5 flex items-center justify-between text-[10px] font-mono rounded-t-[2px] shadow-xs">
-              <span className="font-bold text-[#F5A524] text-[9px]">
-                {telemetry.elevatorId.toUpperCase()}
-              </span>
-              <div className="flex items-center space-x-1">
-                {telemetry.direction === 'UP' && <ArrowUp className="h-3 w-3 text-[#15804D] animate-bounce" />}
-                {telemetry.direction === 'DOWN' && <ArrowDown className="h-3 w-3 text-[#15804D] animate-bounce" />}
-                {telemetry.direction === 'STATIONARY' && <Minus className="h-3 w-3 text-slate-400" />}
-                <span className="font-bold text-white text-[10px]">
-                  FL {Math.round(telemetry.floor)}
+            {/* Steel Hoist Wire Ropes in Isometric Mode */}
+            {viewMode === 'ISOMETRIC' && (
+              <>
+                {/* Car Hoist Cables (Connect from top of hoistway to roof of car) */}
+                <div
+                  className="absolute top-0 w-0.5 bg-slate-500 pointer-events-none z-15"
+                  style={{ left: '46%', bottom: `${carBottomPct + carHeightPct}%` }}
+                ></div>
+                <div
+                  className="absolute top-0 w-0.5 bg-slate-500 pointer-events-none z-15"
+                  style={{ left: '50%', bottom: `${carBottomPct + carHeightPct}%` }}
+                ></div>
+
+                {/* Counterweight Cables (Connect from top of hoistway to counterweight) */}
+                <div
+                  className="absolute top-0 w-0.5 bg-slate-500 pointer-events-none z-15"
+                  style={{ right: '23%', bottom: `${counterweightBottomPct + cwHeightPct}%` }}
+                ></div>
+
+                {/* THE COUNTERWEIGHT (Accurately sized & moves vertically opposite to the car) */}
+                <div
+                  className="absolute w-4 sm:w-5 bg-gradient-to-b from-slate-500 to-slate-700 rounded-[2px] border border-slate-800 shadow-sm z-20 transition-all duration-700 ease-in-out flex flex-col justify-between p-0.5"
+                  style={{
+                    right: '21%',
+                    bottom: `${counterweightBottomPct}%`,
+                    height: `${cwHeightPct}%`,
+                  }}
+                  title="Counterweight Assembly"
+                >
+                  <div className="h-0.5 bg-slate-300 rounded"></div>
+                  <div className="h-0.5 bg-slate-300 rounded"></div>
+                </div>
+              </>
+            )}
+
+            {/* THE ELEVATOR CAR (Fits inside 1 floor row, never obscuring other floors!) */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 w-24 sm:w-32 bg-[#FFF2CF] border-2 border-[#F5A524] rounded-[3px] shadow-[0_0_16px_rgba(245,165,36,0.4)] flex flex-col justify-between transition-all duration-700 ease-in-out z-30"
+              style={{
+                bottom: `${carBottomPct}%`,
+                height: `${carHeightPct}%`,
+              }}
+            >
+              {/* Dark Roof Display showing Direction Arrow and Floor */}
+              <div className="bg-[#1B2236] text-white px-1.5 py-0.5 flex items-center justify-between text-[9px] font-mono rounded-t-[2px] shadow-xs flex-shrink-0">
+                <span className="font-bold text-[#F5A524] text-[8px] truncate">
+                  {telemetry.elevatorId.toUpperCase()}
                 </span>
+                <div className="flex items-center space-x-1 flex-shrink-0">
+                  {telemetry.direction === 'UP' && <ArrowUp className="h-2.5 w-2.5 text-[#15804D] animate-bounce" />}
+                  {telemetry.direction === 'DOWN' && <ArrowDown className="h-2.5 w-2.5 text-[#15804D] animate-bounce" />}
+                  {telemetry.direction === 'STATIONARY' && <Minus className="h-2.5 w-2.5 text-slate-400" />}
+                  <span className="font-bold text-white text-[9px]">
+                    FL {Math.round(telemetry.floor)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Car Interior & Sliding Doors */}
+              <div className="relative flex-1 bg-[#FFF9E6] border-y border-[#F5A524]/40 flex items-center justify-center overflow-hidden min-h-0">
+                {/* Left Sliding Door Panel */}
+                <div
+                  className="absolute top-0 bottom-0 left-0 bg-[#E2E8F0] border-r border-[#94A3B8] transition-all duration-700 ease-in-out shadow-xs"
+                  style={{ width: `${doorWidthPct}%` }}
+                ></div>
+
+                {/* Right Sliding Door Panel */}
+                <div
+                  className="absolute top-0 bottom-0 right-0 bg-[#E2E8F0] border-l border-[#94A3B8] transition-all duration-700 ease-in-out shadow-xs"
+                  style={{ width: `${doorWidthPct}%` }}
+                ></div>
+
+                {/* Passenger/Load Indicator inside car */}
+                <div className="text-[9px] font-mono text-[#9C5C00] font-bold z-0 truncate px-1">
+                  {telemetry.loadPercent}% LOAD
+                </div>
+              </div>
+
+              {/* Car Floor / Toe Guard */}
+              <div className="h-1 bg-[#D97706] rounded-b-[2px] flex-shrink-0"></div>
+            </div>
+          </div>
+
+          {/* Right Column: Shaft Technical Telemetry */}
+          <div className="w-12 sm:w-16 bg-[#7E8BAB] flex flex-col justify-between py-3 px-1.5 z-20 shadow-xs border-l border-[#8D9AB8] text-center">
+            <div className="text-[9px] font-bold text-white tracking-widest uppercase">
+              SHAFT
+            </div>
+            <div className="space-y-3">
+              <div className="text-[10px] font-mono text-white font-bold leading-tight">
+                {telemetry.velocityMps.toFixed(2)}
+                <span className="block text-[8px] font-normal text-slate-200">m/s</span>
+              </div>
+              <div className="text-[10px] font-mono text-white font-bold leading-tight">
+                {telemetry.motorTempCelsius.toFixed(0)}&deg;C
+                <span className="block text-[8px] font-normal text-slate-200">TEMP</span>
               </div>
             </div>
-
-            {/* Car Interior & Sliding Doors */}
-            <div className="relative flex-1 bg-[#FFF9E6] border-y border-[#F5A524]/40 flex items-center justify-center overflow-hidden">
-              {/* Left Sliding Door Panel */}
-              <div
-                className="absolute top-0 bottom-0 left-0 bg-[#E2E8F0] border-r border-[#94A3B8] transition-all duration-700 ease-in-out shadow-xs"
-                style={{ width: `${doorWidthPct}%` }}
-              ></div>
-
-              {/* Right Sliding Door Panel */}
-              <div
-                className="absolute top-0 bottom-0 right-0 bg-[#E2E8F0] border-l border-[#94A3B8] transition-all duration-700 ease-in-out shadow-xs"
-                style={{ width: `${doorWidthPct}%` }}
-              ></div>
-
-              {/* Passenger/Load Indicator inside car */}
-              <div className="text-[10px] font-mono text-[#9C5C00] font-bold z-0">
-                {telemetry.loadPercent}% LOAD
-              </div>
+            <div className="text-[9px] font-mono text-white">
+              ZONE 1
             </div>
-
-            {/* Car Floor / Toe Guard */}
-            <div className="h-1.5 bg-[#D97706] rounded-b-[2px]"></div>
-          </div>
-        </div>
-
-        {/* Right Building Side Column (#7E8BAB) */}
-        <div className="w-14 sm:w-16 bg-[#7E8BAB] rounded-r flex flex-col justify-between py-3 px-2 z-20 shadow-sm border-l border-[#8D9AB8] text-center">
-          <div className="text-[9px] font-bold text-white tracking-widest uppercase">
-            SHAFT
-          </div>
-          <div className="space-y-4">
-            <div className="text-[10px] font-mono text-white font-bold">
-              {telemetry.velocityMps.toFixed(2)}
-              <span className="block text-[8px] font-normal text-slate-200">m/s</span>
-            </div>
-            <div className="text-[10px] font-mono text-white font-bold">
-              {telemetry.motorTempCelsius.toFixed(0)}&deg;C
-              <span className="block text-[8px] font-normal text-slate-200">TEMP</span>
-            </div>
-          </div>
-          <div className="text-[9px] font-mono text-white">
-            ZONE 1
           </div>
         </div>
       </div>
 
       {/* Visualizer Footer Telemetry Summary */}
-      <div className="mt-3 pt-2.5 border-t border-[#DCDFEA] flex flex-wrap items-center justify-between text-xs text-[#5D6375]">
-        <div className="flex items-center space-x-3">
+      <div className="mt-3 pt-2.5 border-t border-[#DCDFEA] flex flex-wrap items-center justify-between text-xs text-[#5D6375] gap-2">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <span className="flex items-center space-x-1.5">
             <span className="h-2 w-2 rounded-full bg-[#15804D] inline-block animate-pulse"></span>
             <span className="font-medium text-[#1E2232]">Kinematic Tracking:</span>
@@ -349,7 +391,7 @@ export function ElevatorShaftVisualizer({
           <span>Velocity: <strong className="font-mono text-[#1E2232]">{telemetry.velocityMps.toFixed(2)} m/s</strong></span>
         </div>
 
-        <div className="text-[11px] font-mono">
+        <div suppressHydrationWarning className="text-[11px] font-mono">
           Last Packet: {new Date(telemetry.timestamp).toLocaleTimeString()}
         </div>
       </div>
