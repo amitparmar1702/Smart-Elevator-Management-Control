@@ -2,28 +2,19 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { 
   Building2, 
   Activity, 
-  ShieldAlert, 
-  FileText, 
   ArrowRight, 
   Layers, 
   Cpu, 
-  Users, 
-  HardHat, 
-  PhoneCall, 
-  Sliders,
-  ShieldCheck,
-  Zap,
-  ArrowUp,
-  Minus,
-  Sparkles,
-  Compass
+  ShieldCheck, 
+  Zap, 
+  ArrowUp, 
+  Minus, 
+  Sparkles, 
+  Compass 
 } from 'lucide-react';
-import { useAuthStore } from '@/stores/authStore';
-import { UserRole } from '@elevateos/types';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -33,8 +24,6 @@ import { MultiShaftFleetVisualizer } from '@/components/shaft/MultiShaftFleetVis
 import { GroupDispatchKiosk } from '@/components/dispatch/GroupDispatchKiosk';
 
 export default function HomePage() {
-  const router = useRouter();
-  const { switchRole } = useAuthStore();
   const [activeConsoleTab, setActiveConsoleTab] = useState<'SHAFTS' | 'DISPATCH' | 'INVENTORY'>('SHAFTS');
 
   const fleetCars = [
@@ -43,71 +32,6 @@ export default function HomePage() {
     { id: 'elv-a-03', code: 'ELV-A-03', name: 'Car 3 (Freight & Service)', floor: 8, dir: 'STATIONARY', load: 68, status: 'RUNNING', mfr: 'Schindler' },
     { id: 'elv-a-04', code: 'ELV-A-04', name: 'Car 4 (Fire & Emergency)', floor: 1, dir: 'STATIONARY', load: 0, status: 'IDLE', mfr: 'TK Elevator' },
   ];
-
-  const primaryWorkspaces = [
-    {
-      title: 'Digital Twin & Blackbox Replay',
-      description: 'Single-car telemetry cockpit, historical blackbox scrubber, and multi-angle CCTV feeds.',
-      icon: Activity,
-      href: '/elevators/elv-a-01/live',
-      badge: 'Cockpit',
-      role: 'ORGANISATION_ADMIN' as UserRole,
-    },
-    {
-      title: 'Control Room Surveillance Grid',
-      description: 'Continuous 4-car live monitoring grid, alarm detection, and emergency coordination.',
-      icon: ShieldAlert,
-      href: '/control-room/grid',
-      badge: 'Real-Time',
-      role: 'SECURITY_OPERATOR' as UserRole,
-    },
-    {
-      title: 'Field Technician & Work Orders',
-      description: 'IS 17900 inspection signoff, QR code placard generator, motor diagnostics, and offline sync.',
-      icon: HardHat,
-      href: '/technician/mobile',
-      badge: 'Maintenance',
-      role: 'TECHNICIAN' as UserRole,
-    },
-    {
-      title: 'Active Safety Alarms Console',
-      description: 'Audited 3-state alarm lifecycle management with 1-click work order creation.',
-      icon: ShieldCheck,
-      href: '/safety/alarms',
-      badge: 'Safety',
-      role: 'SECURITY_OPERATOR' as UserRole,
-    },
-    {
-      title: 'Predictive Health AI & FFT',
-      description: 'Motor vibration harmonics, component wear RUL estimation, and anomaly detection.',
-      icon: Cpu,
-      href: '/analytics/predictive',
-      badge: 'AI Diagnostic',
-      role: 'ORGANISATION_ADMIN' as UserRole,
-    },
-    {
-      title: 'Regenerative Grid & Parking Eco',
-      description: 'ISO 50001 regenerative power telemetry, building base load offset, and eco-parking.',
-      icon: Zap,
-      href: '/operations/parking',
-      badge: 'Energy',
-      role: 'FACILITY_MANAGER' as UserRole,
-    },
-  ];
-
-  const quickTools = [
-    { label: 'Resident Portal', href: '/resident/dashboard', icon: PhoneCall, role: 'RESIDENT' as UserRole },
-    { label: 'Statutory Reports', href: '/reports', icon: FileText, role: 'AUDITOR' as UserRole },
-    { label: 'Compliance Audit Trail', href: '/audit/logs', icon: Sliders, role: 'AUDITOR' as UserRole },
-    { label: 'Emergency Intercom', href: '/safety/incidents', icon: ShieldAlert, role: 'EMERGENCY_OPERATOR' as UserRole },
-    { label: 'Fleet Compare', href: '/elevators/comparison', icon: Layers, role: 'ORGANISATION_ADMIN' as UserRole },
-    { label: 'Platform Super Admin', href: '/admin/dashboard', icon: Users, role: 'SUPER_ADMIN' as UserRole },
-  ];
-
-  const handleLaunch = (href: string, role: UserRole) => {
-    switchRole(role);
-    router.push(href);
-  };
 
   return (
     <DashboardLayout
@@ -264,84 +188,58 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* 3. PRIMARY ROLE WORKSPACES & MANAGEMENT HUBS */}
-        <div>
-          <div className="mb-2.5">
-            <h3 className="text-sm font-bold text-[#433690] tracking-tight">
-              Operational Command Hubs & Role Portals
-            </h3>
-            <p className="text-xs text-[#5D6375]">
-              Dedicated workstations for real-time fleet operations, dispatch, field maintenance, and security.
-            </p>
+        {/* 3. INDUSTRIAL TELEMETRY & STATUTORY SYSTEM HEALTH STRIP */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3 bg-white rounded-[8px] border border-[#DCDFEA] shadow-xs flex items-center space-x-3">
+            <div className="h-8 w-8 rounded-[6px] bg-[#DCEFE4] text-[#15804D] flex items-center justify-center flex-shrink-0">
+              <Activity className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono uppercase text-[#5D6375] font-semibold">IoT Edge Link</div>
+              <div className="text-xs font-bold text-[#1E2232] truncate">EMQX MQTT 5.0 (TLS 1.3)</div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {primaryWorkspaces.map((ws) => {
-              const Icon = ws.icon;
-              return (
-                <div
-                  key={ws.title}
-                  onClick={() => handleLaunch(ws.href, ws.role)}
-                  className="group cursor-pointer flex flex-col justify-between p-3.5 rounded-[10px] border border-[#DCDFEA] bg-white shadow-card hover:shadow-md hover:border-[#433690]/40 transition-all duration-200"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="h-8 w-8 rounded-[6px] bg-[#E6E3F7] text-[#433690] flex items-center justify-center group-hover:bg-[#433690] group-hover:text-white transition-colors">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#EEF0F6] text-[#5D6375]">
-                        {ws.badge}
-                      </span>
-                    </div>
+          <div className="p-3 bg-white rounded-[8px] border border-[#DCDFEA] shadow-xs flex items-center space-x-3">
+            <div className="h-8 w-8 rounded-[6px] bg-[#DCEFE4] text-[#15804D] flex items-center justify-center flex-shrink-0">
+              <ShieldCheck className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono uppercase text-[#5D6375] font-semibold">Safety Circuit</div>
+              <div className="text-xs font-bold text-[#1E2232] truncate">100% Interlocked (EN 81-20)</div>
+            </div>
+          </div>
 
-                    <h4 className="text-xs font-bold text-[#1E2232] group-hover:text-[#433690] transition-colors">
-                      {ws.title}
-                    </h4>
-                    <p className="text-[11px] text-[#5D6375] mt-0.5 leading-relaxed">
-                      {ws.description}
-                    </p>
-                  </div>
+          <div className="p-3 bg-white rounded-[8px] border border-[#DCDFEA] shadow-xs flex items-center space-x-3">
+            <div className="h-8 w-8 rounded-[6px] bg-[#E6E3F7] text-[#433690] flex items-center justify-center flex-shrink-0">
+              <Cpu className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono uppercase text-[#5D6375] font-semibold">Ride Quality</div>
+              <div className="text-xs font-bold text-[#1E2232] truncate">ISO 18738 Class A (0.042 m/s²)</div>
+            </div>
+          </div>
 
-                  <div className="mt-3 pt-2 border-t border-[#DCDFEA] flex items-center justify-between text-[11px] font-medium text-[#5D6375] group-hover:text-[#433690]">
-                    <span className="text-[10px] font-mono text-slate-400 font-bold">{ws.role}</span>
-                    <div className="flex items-center space-x-1 font-semibold">
-                      <span>Open Workspace</span>
-                      <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="p-3 bg-white rounded-[8px] border border-[#DCDFEA] shadow-xs flex items-center space-x-3">
+            <div className="h-8 w-8 rounded-[6px] bg-[#DCEFE4] text-[#15804D] flex items-center justify-center flex-shrink-0">
+              <Zap className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono uppercase text-[#5D6375] font-semibold">Microgrid Offset</div>
+              <div className="text-xs font-bold text-[#1E2232] truncate">+148.5 kWh Regenerated</div>
+            </div>
           </div>
         </div>
 
-        {/* 4. SPECIALIZED QUICK-LAUNCH TOOLKIT */}
-        <Card title="Quick-Access Specialized Modules">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            {quickTools.map((tool) => {
-              const Icon = tool.icon;
-              return (
-                <button
-                  key={tool.label}
-                  onClick={() => handleLaunch(tool.href, tool.role)}
-                  className="flex flex-col items-center justify-center p-2.5 rounded-[6px] border border-[#DCDFEA] bg-[#EEF0F6]/50 hover:bg-[#E6E3F7] hover:border-[#433690]/30 transition-colors text-center group"
-                >
-                  <Icon className="h-3.5 w-3.5 text-[#433690] mb-1 group-hover:scale-110 transition-transform" />
-                  <span className="text-[11px] font-semibold text-[#1E2232] group-hover:text-[#433690]">
-                    {tool.label}
-                  </span>
-                </button>
-              );
-            })}
+        {/* 4. STATUTORY MANDATE FOOTNOTE */}
+        <div className="p-3 rounded-[8px] bg-white border border-[#DCDFEA] flex items-center justify-between text-[11px] text-[#5D6375] shadow-xs">
+          <div className="flex items-center space-x-2">
+            <ShieldCheck className="h-4 w-4 text-[#15804D] flex-shrink-0" />
+            <span><strong>EN 81-20/50 & IS 17900 Compliant:</strong> Cloud commands execute through 12-state verified telemetry lifecycle.</span>
           </div>
-        </Card>
-
-        {/* 5. STATUTORY SAFETY & COMPLIANCE DIRECTIVE */}
-        <div className="p-3.5 rounded-[8px] bg-white border border-[#DCDFEA] flex items-start space-x-3 shadow-xs">
-          <ShieldCheck className="h-4 w-4 text-[#15804D] mt-0.5 flex-shrink-0" />
-          <div className="text-[11px] text-[#5D6375] leading-relaxed">
-            <span className="font-bold text-[#1E2232]">STATUTORY SAFETY & COMPLIANCE MANDATE:</span> ElevateOS strictly complies with EN 81-20/50 and IS 17900 international elevator standards. Remote operations require multi-sensor state verification. Local elevator safety interlocks, overspeed governors, and machine-room lockouts operate with 100% fail-safe autonomous priority.
-          </div>
+          <Link href="/audit/logs" className="text-[#433690] hover:underline font-semibold flex-shrink-0 hidden sm:inline">
+            View Compliance Trail &rarr;
+          </Link>
         </div>
       </div>
     </DashboardLayout>
