@@ -55,12 +55,12 @@ export function ApplicationStatusBar() {
 
         <div className="flex items-center space-x-1">
           <span className="text-slate-400">SCOPE:</span>
-          <span className="font-semibold text-[#433690]">{activeRole}</span>
+          <span suppressHydrationWarning className="font-semibold text-[#433690]">{activeRole}</span>
         </div>
 
         <div className="hidden sm:block text-slate-300">|</div>
 
-        <div className="hidden sm:block text-slate-400">
+        <div suppressHydrationWarning className="hidden sm:block text-slate-400">
           {time}
         </div>
 

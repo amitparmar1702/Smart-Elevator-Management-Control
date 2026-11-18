@@ -251,6 +251,7 @@ export function Topbar() {
         {/* Role Persona Switcher (Min 40px height, 8px radius) */}
         <div className="relative">
           <button
+            suppressHydrationWarning
             onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
             className="h-9 sm:h-10 px-2 sm:px-3 rounded-[8px] border border-[#DCDFEA] bg-white hover:bg-slate-50 text-xs font-medium text-[#1E2232] flex items-center space-x-1.5 transition-colors shadow-xs"
             title={isMasterRole ? `Active Role: ${effectiveRole} (Master Bypass Active - All 12 Roles Unlocked)` : `Active Role: ${effectiveRole}`}
@@ -261,7 +262,7 @@ export function Topbar() {
               <ShieldCheck className="h-4 w-4 text-[#433690] flex-shrink-0" />
             )}
             <span className="hidden sm:inline text-[#5D6375] text-[11px]">Role:</span>
-            <strong className="text-[#433690] font-bold max-w-[85px] xs:max-w-[120px] lg:max-w-[150px] truncate">
+            <strong suppressHydrationWarning className="text-[#433690] font-bold max-w-[85px] xs:max-w-[120px] lg:max-w-[150px] truncate">
               {effectiveRole}
             </strong>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
@@ -323,6 +324,7 @@ export function Topbar() {
 
         {/* Dedicated Quick Sign Out Button */}
         <button
+          suppressHydrationWarning
           onClick={() => {
             audioService.playCallRegistered();
             logout();

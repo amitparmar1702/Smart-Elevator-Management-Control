@@ -334,6 +334,7 @@ export function Sidebar() {
         <div className={`p-3 border-b border-[#DCDFEA] bg-[#EEF0F6]/60 ${sidebarCollapsed ? 'flex justify-center' : ''}`}>
           <div className="flex items-center space-x-2.5">
             <div
+              suppressHydrationWarning
               className="h-8 w-8 rounded-full bg-[#433690] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-xs ring-1 ring-[#DCDFEA]"
               title={userName}
             >
@@ -341,9 +342,9 @@ export function Sidebar() {
             </div>
             {!sidebarCollapsed && (
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-[#1E2232] truncate leading-tight">{userName}</div>
+                <div suppressHydrationWarning className="text-xs font-semibold text-[#1E2232] truncate leading-tight">{userName}</div>
                 <div className="flex items-center space-x-1.5 mt-0.5">
-                  <span className="text-[10px] font-mono text-[#433690] font-bold truncate">{effectiveRole}</span>
+                  <span suppressHydrationWarning className="text-[10px] font-mono text-[#433690] font-bold truncate">{effectiveRole}</span>
                   {(effectiveRole === 'SUPER_ADMIN' || effectiveRole === 'ORGANISATION_ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'ORGANISATION_ADMIN') && (
                     <span className="text-[9px] px-1 py-0.2 rounded bg-[#E6E3F7] text-[#433690] font-bold border border-[#433690]/20" title="Super Admin and Organisation Admin have universal cross-role access to all 12 portals">
                       ALL ROLES
@@ -472,7 +473,7 @@ export function Sidebar() {
             title={`Sign out of ${effectiveRole} session and return to login`}
           >
             <LogOut className="h-4 w-4 flex-shrink-0" />
-            {!sidebarCollapsed && <span>Sign Out ({effectiveRole})</span>}
+            {!sidebarCollapsed && <span suppressHydrationWarning>Sign Out ({effectiveRole})</span>}
           </button>
 
           {!sidebarCollapsed ? (
