@@ -101,59 +101,59 @@ export function Topbar() {
     }
   };
 
+  const isMasterRole = effectiveRole === 'SUPER_ADMIN' || effectiveRole === 'ORGANISATION_ADMIN' || activeRole === 'SUPER_ADMIN' || activeRole === 'ORGANISATION_ADMIN';
+
   return (
-    <header className="h-[62px] sticky top-0 z-30 bg-white border-b border-[#DCDFEA] px-3 sm:px-4 md:px-6 flex items-center justify-between shadow-xs">
+    <header className="h-[62px] sticky top-0 z-30 bg-white border-b border-[#DCDFEA] px-3 sm:px-4 md:px-5 flex items-center justify-between shadow-xs">
       {/* Left: ☰ button + Brand Tagline + Location Selectors */}
-      <div className="flex items-center space-x-2.5 sm:space-x-4 min-w-0">
+      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
         {/* ☰ Hamburger Button */}
         <button
           onClick={handleMenuClick}
           aria-label="Toggle navigation menu"
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-[8px] border border-[#DCDFEA] bg-white text-[#1E2232] flex items-center justify-center hover:bg-slate-50 transition-colors flex-shrink-0"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-[8px] border border-[#DCDFEA] bg-white text-[#1E2232] flex items-center justify-center hover:bg-slate-50 transition-colors flex-shrink-0 shadow-2xs"
         >
           <Menu className="h-5 w-5 text-[#433690]" />
         </button>
 
         {/* Brand Tagline */}
-        <div className="hidden sm:block min-w-0">
-          <div className="flex items-center space-x-2">
-            <span className="font-bold text-sm tracking-tight text-[#1E2232]">
-              ElevateOS
-            </span>
-            <span className="text-slate-300">|</span>
-            <span className="text-xs text-[#5D6375] font-normal truncate">
-              Fleet Operations Application
-            </span>
-          </div>
+        <div className="flex items-center space-x-2 min-w-0">
+          <span className="font-bold text-sm tracking-tight text-[#1E2232]">
+            ElevateOS
+          </span>
+          <span className="hidden 2xl:inline text-slate-300">|</span>
+          <span className="hidden 2xl:inline text-xs text-[#5D6375] font-normal truncate">
+            Fleet Operations
+          </span>
         </div>
 
         <span className="hidden md:inline text-slate-300">/</span>
 
-        {/* Organisation & Building Selectors */}
-        <div className="hidden lg:flex items-center space-x-2 text-xs">
-          <Building2 className="h-4 w-4 text-[#5D6375]" />
-          <span className="font-medium text-[#1E2232]">{selectedOrg}</span>
-          <span className="text-slate-300">·</span>
-          <span className="text-[#5D6375]">{selectedBuilding}</span>
-          <span className="text-[10px] bg-slate-100 text-[#5D6375] px-1.5 py-0.5 rounded font-mono">
+        {/* Building & Elevator Count Selector */}
+        <div className="hidden md:flex items-center space-x-1.5 text-xs min-w-0">
+          <Building2 className="h-4 w-4 text-[#5D6375] flex-shrink-0" />
+          <span className="font-semibold text-[#1E2232] truncate max-w-[150px] lg:max-w-[200px]">
+            {selectedBuilding}
+          </span>
+          <span className="text-[10px] bg-[#EEF0F6] text-[#433690] px-1.5 py-0.5 rounded font-mono font-bold border border-[#DCDFEA] flex-shrink-0">
             4 Elevators
           </span>
         </div>
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center space-x-2 sm:space-x-2.5">
+      <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
         {/* Quick Command Search Pill (Ctrl+K) */}
         <button
           onClick={() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
           }}
-          className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-[8px] border border-[#DCDFEA] bg-[#EEF0F6]/70 hover:bg-[#EEF0F6] text-xs text-[#5D6375] transition-colors"
+          className="h-9 sm:h-10 px-2 sm:px-3 rounded-[8px] border border-[#DCDFEA] bg-[#EEF0F6]/70 hover:bg-[#EEF0F6] text-xs text-[#5D6375] transition-colors flex items-center space-x-1.5 shadow-2xs"
           title="Open Command Palette (Ctrl+K)"
         >
-          <Search className="h-3.5 w-3.5 text-[#433690]" />
-          <span>Quick Search...</span>
-          <kbd className="text-[10px] bg-white border border-[#DCDFEA] px-1.5 py-0.2 rounded font-mono text-slate-500 font-semibold shadow-2xs">
+          <Search className="h-4 w-4 text-[#433690] flex-shrink-0" />
+          <span className="hidden xl:inline text-xs">Search...</span>
+          <kbd className="hidden lg:inline text-[10px] bg-white border border-[#DCDFEA] px-1.5 py-0.2 rounded font-mono text-slate-500 font-semibold shadow-2xs">
             Ctrl K
           </kbd>
         </button>
@@ -161,20 +161,24 @@ export function Topbar() {
         {/* Acoustic Audio Chimes Toggle */}
         <button
           onClick={handleToggleAudio}
-          className={`hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-[8px] border text-xs font-mono font-semibold transition-all shadow-xs ${
+          className={`w-9 h-9 sm:w-10 sm:h-10 rounded-[8px] border text-xs flex items-center justify-center transition-all shadow-xs ${
             !isAudioMuted
               ? 'bg-[#E6E3F7] text-[#433690] border-[#433690]/30 hover:bg-[#D8D3F3]'
               : 'bg-white text-[#5D6375] border-[#DCDFEA] hover:bg-slate-50'
           }`}
-          title="Toggle acoustic arrival & call registration sounds (Web Audio API)"
+          title={!isAudioMuted ? 'Acoustic Sound FX: ON (Click to mute)' : 'Acoustic Sound FX: MUTED (Click to enable)'}
+          aria-label="Toggle Sound Effects"
         >
-          {!isAudioMuted ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-          <span className="hidden lg:inline">{!isAudioMuted ? 'FX: ON' : 'FX: MUTED'}</span>
+          {!isAudioMuted ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-slate-400" />}
         </button>
+
         {/* Simulator Link Status */}
-        <div className="hidden sm:flex items-center space-x-1.5 text-xs bg-[#DCEFE4] text-[#15804D] border border-[#15804D]/20 px-2.5 py-1 rounded-full font-medium">
-          <Radio className="h-3 w-3 text-[#15804D] animate-pulse" />
-          <span>Simulator Active</span>
+        <div
+          className="flex items-center space-x-1.5 text-xs bg-[#DCEFE4] text-[#15804D] border border-[#15804D]/20 px-2 sm:px-2.5 h-9 sm:h-10 rounded-[8px] font-medium shadow-2xs"
+          title="EMQX MQTT 5.0 Simulator Active (Port 1883 · TLS 1.3)"
+        >
+          <Radio className="h-3.5 w-3.5 text-[#15804D] animate-pulse flex-shrink-0" />
+          <span className="hidden xl:inline text-xs font-semibold">Sim Active</span>
         </div>
 
         {/* Notifications Button & Dropdown */}
@@ -245,24 +249,19 @@ export function Topbar() {
         </div>
 
         {/* Role Persona Switcher (Min 40px height, 8px radius) */}
-        <div className="relative flex items-center space-x-1.5">
-          {(effectiveRole === 'SUPER_ADMIN' || effectiveRole === 'ORGANISATION_ADMIN' || activeRole === 'SUPER_ADMIN' || activeRole === 'ORGANISATION_ADMIN') && (
-            <span
-              className="hidden xl:inline-flex items-center space-x-1 px-2.5 py-1 rounded-[6px] text-[10px] font-mono font-bold bg-[#E6E3F7] text-[#433690] border border-[#433690]/25 shadow-2xs"
-              title="Super Admin & Organisation Admin have master cross-role bypass access to all 12 portals at all times"
-            >
-              <Crown className="h-3 w-3 text-[#433690]" />
-              <span>All 12 Roles Unlocked</span>
-            </span>
-          )}
-
+        <div className="relative">
           <button
             onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-            className="h-9 sm:h-10 px-2 sm:px-3 rounded-[8px] border border-[#DCDFEA] bg-white hover:bg-slate-50 text-xs font-medium text-[#1E2232] flex items-center space-x-1.5 sm:space-x-2 transition-colors shadow-xs"
+            className="h-9 sm:h-10 px-2 sm:px-3 rounded-[8px] border border-[#DCDFEA] bg-white hover:bg-slate-50 text-xs font-medium text-[#1E2232] flex items-center space-x-1.5 transition-colors shadow-xs"
+            title={isMasterRole ? `Active Role: ${effectiveRole} (Master Bypass Active - All 12 Roles Unlocked)` : `Active Role: ${effectiveRole}`}
           >
-            <ShieldCheck className="h-4 w-4 text-[#433690] flex-shrink-0" />
-            <span className="hidden sm:inline text-[#5D6375]">Role:</span>
-            <strong className="text-[#433690] font-semibold max-w-[80px] xs:max-w-[120px] sm:max-w-none truncate" title={effectiveRole}>
+            {isMasterRole ? (
+              <Crown className="h-4 w-4 text-[#433690] flex-shrink-0" />
+            ) : (
+              <ShieldCheck className="h-4 w-4 text-[#433690] flex-shrink-0" />
+            )}
+            <span className="hidden sm:inline text-[#5D6375] text-[11px]">Role:</span>
+            <strong className="text-[#433690] font-bold max-w-[85px] xs:max-w-[120px] lg:max-w-[150px] truncate">
               {effectiveRole}
             </strong>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
@@ -331,10 +330,10 @@ export function Topbar() {
           }}
           aria-label="Sign out of current role"
           title={`Sign out of ${effectiveRole} session and return to login`}
-          className="h-9 sm:h-10 px-2 sm:px-2.5 rounded-[8px] border border-[#DCDFEA] bg-white hover:bg-[#F8DDDC]/50 hover:border-[#C92D29]/40 text-[#5D6375] hover:text-[#C92D29] flex items-center space-x-1.5 transition-colors shadow-xs"
+          className="h-9 sm:h-10 px-2 sm:px-2.5 rounded-[8px] border border-[#DCDFEA] bg-white hover:bg-[#F8DDDC]/60 hover:border-[#C92D29]/40 text-[#5D6375] hover:text-[#C92D29] flex items-center space-x-1.5 transition-colors shadow-xs"
         >
-          <LogOut className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline text-xs font-semibold">Sign Out</span>
+          <LogOut className="h-4 w-4 flex-shrink-0" />
+          <span className="hidden xl:inline text-xs font-semibold">Sign Out</span>
         </button>
       </div>
     </header>
