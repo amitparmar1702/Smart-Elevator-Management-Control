@@ -4,12 +4,19 @@ import React, { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { ApplicationStatusBar } from './ApplicationStatusBar';
-import { MobileBottomNav } from './MobileBottomNav';
 import { CommandPalette } from './CommandPalette';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
+import { 
+  ChevronRight, 
+  Layers, 
+  Activity, 
+  LayoutGrid, 
+  Smartphone, 
+  Menu 
+} from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
+import { useThemeStore } from '../../stores/themeStore';
 
 interface BreadcrumbItem {
   label: string;
@@ -33,6 +40,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { activeRole, switchRole } = useAuthStore();
+  const { setMobileDrawerOpen } = useThemeStore();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
@@ -92,7 +100,7 @@ export function DashboardLayout({
         </div>
 
         {/* Scrollable Main Workspace */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 md:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 md:p-6 pb-20 md:pb-6">
           <div className="max-w-[1320px] mx-auto w-full">
             {/* Breadcrumbs & Header Bar */}
             {(breadcrumbs || title || actions) && (
@@ -135,11 +143,66 @@ export function DashboardLayout({
           </div>
         </main>
 
-        {/* Dedicated Industrial Application Status Bar (Desktop) */}
-        <ApplicationStatusBar />
+        {/* Dedicated Industrial Application Status Bar (Desktop/Tablet) */}
+        <div className="hidden md:block">
+          <ApplicationStatusBar />
+        </div>
 
-        {/* Dedicated Mobile Bottom Navigation (Smartphones & Tablets < 1024px) */}
-        <MobileBottomNav />
+        {/* Mobile Persistent Bottom Navigation Dock (Phone viewports) */}
+        <nav
+          aria-label="Mobile navigation"
+          className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-white border-t border-[#DCDFEA] flex items-center justify-around z-40 px-1 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+        >
+          <Link
+            href="/org/dashboard"
+            className={`flex flex-col items-center justify-center flex-1 py-1 text-[10px] ${
+              pathname.includes('/dashboard') ? 'text-[#433690] font-bold' : 'text-[#5D6375]'
+            }`}
+          >
+            <Layers className="h-4 w-4 mb-0.5" />
+            <span>Fleet</span>
+          </Link>
+
+          <Link
+            href="/elevators/elv-a-01/live"
+            className={`flex flex-col items-center justify-center flex-1 py-1 text-[10px] ${
+              pathname.includes('/live') ? 'text-[#433690] font-bold' : 'text-[#5D6375]'
+            }`}
+          >
+            <Activity className="h-4 w-4 mb-0.5" />
+            <span>Cockpit</span>
+          </Link>
+
+          <Link
+            href="/control-room/grid"
+            className={`flex flex-col items-center justify-center flex-1 py-1 text-[10px] ${
+              pathname.includes('/control-room') ? 'text-[#433690] font-bold' : 'text-[#5D6375]'
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4 mb-0.5" />
+            <span>Grid</span>
+          </Link>
+
+          <Link
+            href="/mobile"
+            className={`flex flex-col items-center justify-center flex-1 py-1 text-[10px] ${
+              pathname === '/mobile' || pathname.startsWith('/technician/mobile') ? 'text-[#433690] font-bold' : 'text-[#5D6375]'
+            }`}
+          >
+            <Smartphone className="h-4 w-4 mb-0.5" />
+            <span>Mobile</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setMobileDrawerOpen(true)}
+            className="flex flex-col items-center justify-center flex-1 py-1 text-[10px] text-[#5D6375] hover:text-[#433690]"
+            aria-label="Open navigation menu drawer"
+          >
+            <Menu className="h-4 w-4 mb-0.5" />
+            <span>Menu</span>
+          </button>
+        </nav>
       </div>
 
       {/* Universal Command Palette (Ctrl+K) */}
