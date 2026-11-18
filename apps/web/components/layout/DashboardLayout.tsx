@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { ApplicationStatusBar } from './ApplicationStatusBar';
+import { MobileBottomNav } from './MobileBottomNav';
 import { CommandPalette } from './CommandPalette';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -91,7 +92,7 @@ export function DashboardLayout({
         </div>
 
         {/* Scrollable Main Workspace */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 md:p-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 md:p-6 pb-20 lg:pb-6">
           <div className="max-w-[1320px] mx-auto w-full">
             {/* Breadcrumbs & Header Bar */}
             {(breadcrumbs || title || actions) && (
@@ -134,8 +135,11 @@ export function DashboardLayout({
           </div>
         </main>
 
-        {/* Dedicated Industrial Application Status Bar */}
+        {/* Dedicated Industrial Application Status Bar (Desktop) */}
         <ApplicationStatusBar />
+
+        {/* Dedicated Mobile Bottom Navigation (Smartphones & Tablets < 1024px) */}
+        <MobileBottomNav />
       </div>
 
       {/* Universal Command Palette (Ctrl+K) */}

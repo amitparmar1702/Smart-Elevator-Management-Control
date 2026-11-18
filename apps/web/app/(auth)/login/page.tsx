@@ -303,6 +303,24 @@ export default function LoginPage() {
           <span>Super & Org Admins have permanent cross-role access via Topbar.</span>
         </div>
       </div>
+
+      {/* Quick Launch Switcher: Desktop Enterprise vs Mobile Companion */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5 text-xs">
+        <Link
+          href="/org/dashboard"
+          className="px-3 py-1.5 rounded-full bg-white border border-[#DCDFEA] text-[#433690] hover:bg-[#F4F2FC] font-semibold text-[11px] shadow-2xs transition-all flex items-center space-x-1.5"
+        >
+          <Building2 className="h-3.5 w-3.5 text-[#433690]" />
+          <span>Desktop Enterprise Cockpit</span>
+        </Link>
+        <Link
+          href="/technician/mobile"
+          className="px-3 py-1.5 rounded-full bg-white border border-[#DCDFEA] text-[#15804D] hover:bg-[#DCEFE4] font-semibold text-[11px] shadow-2xs transition-all flex items-center space-x-1.5"
+        >
+          <ShieldCheck className="h-3.5 w-3.5 text-[#15804D]" />
+          <span>Mobile Field Technician PWA</span>
+        </Link>
+      </div>
     </div>
   );
 }

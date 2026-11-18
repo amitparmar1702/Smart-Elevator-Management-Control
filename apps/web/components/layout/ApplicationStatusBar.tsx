@@ -19,7 +19,7 @@ export function ApplicationStatusBar() {
   }, []);
 
   return (
-    <footer className="h-7 bg-[#FFFFFF] border-t border-[#DCDFEA] px-3 sm:px-6 flex items-center justify-between text-[11px] font-mono text-[#5D6375] select-none flex-shrink-0 z-20">
+    <footer className="hidden lg:flex h-7 bg-[#FFFFFF] border-t border-[#DCDFEA] px-3 sm:px-6 items-center justify-between text-[11px] font-mono text-[#5D6375] select-none flex-shrink-0 z-20">
       {/* Left: System Telemetry Indicators */}
       <div className="flex items-center space-x-3 sm:space-x-5 overflow-hidden">
         <div className="flex items-center space-x-1.5 text-[#15804D] font-medium flex-shrink-0">
