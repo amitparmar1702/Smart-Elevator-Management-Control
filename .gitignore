@@ -11,6 +11,7 @@ out/
 packages/*/dist/
 apps/*/dist/
 apps/*/.next/
+*.tsbuildinfo
 
 # Environment files
 .env
