@@ -1,0 +1,30 @@
+{
+  "name": "smart-elevator-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ElevateOS - Enterprise Smart Elevator Management & Control Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "node node_modules/jest/bin/jest.js",
+    "audit": "node node_modules/ts-node/dist/bin.js scripts/system-audit.ts",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "keywords": [
+    "elevator",
+    "iot",
+    "smart-building",
+    "telemetry",
+    "mqtt",
+    "digital-twin",
+    "enterprise-saas"
+  ],
+  "author": "ElevateOS Engineering Team",
+  "license": "UNLICENSED"
+}
+

@@ -1,0 +1,32 @@
+{
+  "name": "@elevateos/iot-gateway",
+  "version": "1.0.0",
+  "description": "ElevateOS Independent IoT Gateway & Elevator Simulator Service",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node ../../node_modules/typescript/bin/tsc",
+    "start": "node dist/main.js",
+    "dev": "node ../../node_modules/ts-node/dist/bin.js src/main.ts",
+    "test": "node ../../node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "@elevateos/shared": "*",
+    "@elevateos/types": "*",
+    "@elevateos/validation": "*",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1",
+    "mqtt": "^5.5.3",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.12.12",
+    "@types/ws": "^8.5.10",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
+

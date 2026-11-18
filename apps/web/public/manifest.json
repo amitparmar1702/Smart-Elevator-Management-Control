@@ -1,0 +1,23 @@
+{
+  "name": "ElevateOS Fleet Operations Application",
+  "short_name": "ElevateOS",
+  "description": "Enterprise Smart Elevator Management & Industrial Control Operating System",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EEF0F6",
+  "theme_color": "#433690",
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

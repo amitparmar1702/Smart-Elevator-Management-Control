@@ -1,0 +1,101 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: 'class',
+  content: [
+    './apps/web/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './apps/web/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './apps/web/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './packages/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Roboto', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Arial', 'sans-serif'],
+        mono: ['"Roboto Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+      },
+      colors: {
+        page: '#EEF0F6',
+        card: {
+          DEFAULT: '#FFFFFF',
+          border: '#DCDFEA',
+        },
+        'card-border': '#DCDFEA',
+        main: '#1E2232',
+        muted: '#5D6375',
+        purple: {
+          DEFAULT: '#433690',
+          hover: '#352A75',
+          light: '#8D7FF5',
+          50: '#F4F2FC',
+          100: '#E6E3F7',
+          200: '#C7BFF0',
+          500: '#5543C0',
+          600: '#433690',
+          700: '#352A75',
+          800: '#281F59',
+          900: '#1B143E',
+        },
+        sidebar: {
+          bg: '#FFFFFF',
+          text: '#5D6375',
+          hover: '#F3F5FA',
+          active: '#E6E3F7',
+          marker: '#433690',
+          border: '#DCDFEA',
+        },
+        topbar: {
+          bg: '#FFFFFF',
+          border: '#DCDFEA',
+        },
+        st: {
+          running: '#15804D',
+          'running-bg': '#DCEFE4',
+          warning: '#9C5C00',
+          'warning-bg': '#F6E9D2',
+          alarm: '#C92D29',
+          'alarm-bg': '#F8DDDC',
+          maint: '#5543C0',
+          'maint-bg': '#E6E3F7',
+          offline: '#66707B',
+          'offline-bg': '#E3E6E9',
+        },
+        navy: {
+          950: '#0F131F',
+          900: '#1B2236',
+          800: '#252E48',
+          700: '#2C3656',
+        },
+        canvas: '#EEF0F6',
+        surface: '#FFFFFF',
+        brand: {
+          50: '#F4F2FC',
+          500: '#5543C0',
+          600: '#433690',
+          700: '#352A75',
+        },
+        status: {
+          running: '#15804D',
+          idle: '#433690',
+          warning: '#9C5C00',
+          fault: '#C92D29',
+          maintenance: '#5543C0',
+          offline: '#66707B',
+          emergency: '#C92D29',
+        },
+      },
+      borderRadius: {
+        card: '8px',
+        btn: '6px',
+        input: '8px',
+      },
+      width: {
+        '68': '68px',
+        '240': '240px',
+      },
+      boxShadow: {
+        card: '0 1px 3px rgba(30,34,50,0.06)',
+      },
+    },
+  },
+  plugins: [require('tailwindcss-animate')],
+};

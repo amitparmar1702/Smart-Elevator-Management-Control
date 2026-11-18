@@ -1,0 +1,928 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// 1. ORGANISATION & MULTI-TENANCY
+// ==========================================
+
+enum OrgStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+}
+
+model Organisation {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String
+  slug         String        @unique
+  status       OrgStatus     @default(ACTIVE)
+  contactEmail String        @map("contact_email")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  subscriptions   Subscription[]
+  users           User[]
+  buildings       Building[]
+  elevators       Elevator[]
+  maintenancePlans MaintenancePlan[]
+  workOrders      MaintenanceWorkOrder[]
+  spareParts      SparePart[]
+  serviceContracts ServiceContract[]
+  bookings        Booking[]
+  calls           ElevatorCall[]
+  commands        ElevatorCommand[]
+  faultEvents     FaultEvent[]
+  alarmEvents     AlarmEvent[]
+  incidents       Incident[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+
+  @@map("organisations")
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model Subscription {
+  id             String           @id @default(uuid()) @db.Uuid
+  organisationId String           @map("organisation_id") @db.Uuid
+  plan           SubscriptionPlan @default(PROFESSIONAL)
+  maxBuildings   Int              @default(10) @map("max_buildings")
+  maxElevators   Int              @default(50) @map("max_elevators")
+  startDate      DateTime         @default(now()) @map("start_date")
+  expiryDate     DateTime?        @map("expiry_date")
+  isActive       Boolean          @default(true) @map("is_active")
+
+  organisation   Organisation     @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ==========================================
+// 2. USERS, ROLES & ACCESS SCOPE
+// ==========================================
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum RoleType {
+  SUPER_ADMIN
+  PLATFORM_SUPPORT
+  ORGANISATION_ADMIN
+  BUILDING_MANAGER
+  FACILITY_MANAGER
+  SECURITY_OPERATOR
+  RESIDENT
+  TECHNICIAN
+  TECHNICIAN_SUPERVISOR
+  SERVICE_VENDOR_ADMIN
+  AUDITOR
+  EMERGENCY_OPERATOR
+}
+
+model User {
+  id             String      @id @default(uuid()) @db.Uuid
+  organisationId String?     @map("organisation_id") @db.Uuid
+  email          String      @unique
+  passwordHash   String      @map("password_hash")
+  firstName      String      @map("first_name")
+  lastName       String      @map("last_name")
+  phoneNumber    String?     @map("phone_number")
+  role           RoleType    @default(RESIDENT)
+  status         UserStatus  @default(ACTIVE)
+  mfaEnabled     Boolean     @default(false) @map("mfa_enabled")
+  mfaSecret      String?     @map("mfa_secret")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  organisation       Organisation?        @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  sessions           UserSession[]
+  devices            UserDevice[]
+  buildingAccess     UserBuildingAccess[]
+  elevatorAccess     UserElevatorAccess[]
+  floorAccess        UserFloorAccess[]
+  assignedWorkOrders MaintenanceWorkOrder[] @relation("AssignedTechnician")
+  supervisorSignoffs MaintenanceChecklist[] @relation("SupervisorApprover")
+  bookings           Booking[]
+  bookingApprovals   BookingApproval[]
+  calls              ElevatorCall[]
+  commands           ElevatorCommand[]
+  commandApprovals   CommandApproval[]
+  auditLogs          AuditLog[]
+  notifications      Notification[]
+  acknowledgedAlarms AlarmEvent[]         @relation("AlarmAcknowledgedBy")
+  assignedIncidents  Incident[]           @relation("IncidentAssignedUser")
+
+  @@index([organisationId])
+  @@map("users")
+}
+
+model UserSession {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  tokenHash  String   @map("token_hash")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  expiresAt  DateTime @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_sessions")
+}
+
+model UserDevice {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  deviceName String   @map("device_name")
+  browserType String? @map("browser_type")
+  pushToken  String?  @map("push_token")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_devices")
+}
+
+model UserBuildingAccess {
+  userId     String   @map("user_id") @db.Uuid
+  buildingId String   @map("building_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@id([userId, buildingId])
+  @@map("user_building_access")
+}
+
+model UserElevatorAccess {
+  userId     String   @map("user_id") @db.Uuid
+  elevatorId String   @map("elevator_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  elevator Elevator @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+
+  @@id([userId, elevatorId])
+  @@map("user_elevator_access")
+}
+
+model UserFloorAccess {
+  userId    String   @map("user_id") @db.Uuid
+  floorId   String   @map("floor_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  floor Floor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@id([userId, floorId])
+  @@map("user_floor_access")
+}
+
+// ==========================================
+// 3. BUILDINGS, WINGS & FLOORS
+// ==========================================
+
+model Building {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String   @map("organisation_id") @db.Uuid
+  name           String
+  code           String
+  address        String
+  city           String
+  state          String
+  timezone       String   @default("UTC")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organisation   Organisation         @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  wings          BuildingWing[]
+  floors         Floor[]
+  elevators      Elevator[]
+  groups         ElevatorGroup[]
+  userAccess     UserBuildingAccess[]
+  workOrders     MaintenanceWorkOrder[]
+  bookings       Booking[]
+  calls          ElevatorCall[]
+  commands       ElevatorCommand[]
+  incidents      Incident[]
+
+  @@unique([organisationId, code])
+  @@index([organisationId])
+  @@map("buildings")
+}
+
+model BuildingWing {
+  id         String   @id @default(uuid()) @db.Uuid
+  buildingId String   @map("building_id") @db.Uuid
+  name       String
+
+  building  Building   @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  floors    Floor[]
+  elevators Elevator[]
+
+  @@map("building_wings")
+}
+
+model Floor {
+  id           String   @id @default(uuid()) @db.Uuid
+  buildingId   String   @map("building_id") @db.Uuid
+  wingId       String?  @map("wing_id") @db.Uuid
+  floorNumber  Int      @map("floor_number")
+  displayName  String   @map("display_name")
+  isRestricted Boolean  @default(false) @map("is_restricted")
+
+  building       Building             @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  wing           BuildingWing?        @relation(fields: [wingId], references: [id], onDelete: SetNull)
+  elevatorFloors ElevatorFloor[]
+  userAccess     UserFloorAccess[]
+  accessPolicies AccessPolicy[]
+
+  @@unique([buildingId, floorNumber])
+  @@map("floors")
+}
+
+model AccessPolicy {
+  id                String   @id @default(uuid()) @db.Uuid
+  floorId           String   @map("floor_id") @db.Uuid
+  roleType          RoleType? @map("role_type")
+  timeWindowStart   String?  @map("time_window_start")
+  timeWindowEnd     String?  @map("time_window_end")
+  requiresPasscode  Boolean  @default(false) @map("requires_passcode")
+
+  floor Floor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@map("access_policies")
+}
+
+// ==========================================
+// 4. ELEVATORS, CONTROLLERS & GATEWAYS
+// ==========================================
+
+enum ElevatorOperationalStatus {
+  RUNNING
+  IDLE
+  WARNING
+  FAULT
+  MAINTENANCE
+  OFFLINE
+  EMERGENCY
+}
+
+enum TravelDirection {
+  UP
+  DOWN
+  STATIONARY
+}
+
+enum DoorOperationalState {
+  OPEN
+  CLOSED
+  OPENING
+  CLOSING
+}
+
+model Elevator {
+  id               String                    @id @default(uuid()) @db.Uuid
+  organisationId   String                    @map("organisation_id") @db.Uuid
+  buildingId       String                    @map("building_id") @db.Uuid
+  wingId           String?                   @map("wing_id") @db.Uuid
+  assetCode        String                    @map("asset_code")
+  name             String
+  manufacturer     String
+  model            String
+  serialNumber     String?                   @map("serial_number")
+  installationYear Int                       @map("installation_year")
+  capacityKg       Float                     @default(1000) @map("capacity_kg")
+  maxPassengers    Int                       @default(13) @map("max_passengers")
+  ratedSpeedMps    Float                     @default(1.75) @map("rated_speed_mps")
+  status           ElevatorOperationalStatus @default(IDLE)
+  currentFloor     Int                       @default(1) @map("current_floor")
+  currentDirection TravelDirection           @default(STATIONARY) @map("current_direction")
+  doorState        DoorOperationalState      @default(CLOSED) @map("door_state")
+  createdAt        DateTime                  @default(now()) @map("created_at")
+  updatedAt        DateTime                  @updatedAt @map("updated_at")
+
+  organisation     Organisation              @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  building         Building                  @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  wing             BuildingWing?             @relation(fields: [wingId], references: [id], onDelete: SetNull)
+  controller       Controller?
+  capabilities     ElevatorCapability[]
+  floors           ElevatorFloor[]
+  groupMembers     ElevatorGroupMember[]
+  userAccess       UserElevatorAccess[]
+  commands         ElevatorCommand[]
+  calls            ElevatorCall[]
+  bookings         Booking[]
+  workOrders       MaintenanceWorkOrder[]
+  maintenancePlans MaintenancePlan[]
+  serviceContracts ServiceContract[]
+  maintenanceLogs  MaintenanceLog[]
+  faultEvents      FaultEvent[]
+  alarmEvents      AlarmEvent[]
+  incidents        Incident[]
+
+  @@unique([buildingId, assetCode])
+  @@index([organisationId])
+  @@index([buildingId])
+  @@map("elevators")
+}
+
+model ElevatorFloor {
+  elevatorId     String   @map("elevator_id") @db.Uuid
+  floorId        String   @map("floor_id") @db.Uuid
+  isServiceFloor Boolean  @default(true) @map("is_service_floor")
+
+  elevator Elevator @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  floor    Floor    @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@id([elevatorId, floorId])
+  @@map("elevator_floors")
+}
+
+model ElevatorGroup {
+  id               String                @id @default(uuid()) @db.Uuid
+  buildingId       String                @map("building_id") @db.Uuid
+  name             String
+  dispatchStrategy String                @default("ETA_MINIMAL") @map("dispatch_strategy")
+
+  building Building              @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  members  ElevatorGroupMember[]
+
+  @@map("elevator_groups")
+}
+
+model ElevatorGroupMember {
+  groupId    String @map("group_id") @db.Uuid
+  elevatorId String @map("elevator_id") @db.Uuid
+
+  group    ElevatorGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  elevator Elevator      @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, elevatorId])
+  @@map("elevator_group_members")
+}
+
+model Controller {
+  id              String   @id @default(uuid()) @db.Uuid
+  elevatorId      String   @unique @map("elevator_id") @db.Uuid
+  controllerType  String   @map("controller_type")
+  firmwareVersion String   @map("firmware_version")
+  hardwareVersion String?  @map("hardware_version")
+  busProtocol     String   @default("MODBUS_RTU") @map("bus_protocol")
+  ipAddress       String?  @map("ip_address")
+
+  elevator Elevator @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  gateway  Gateway?
+
+  @@map("controllers")
+}
+
+enum GatewayStatus {
+  ONLINE
+  OFFLINE
+  DEGRADED
+}
+
+model Gateway {
+  id               String             @id @default(uuid()) @db.Uuid
+  controllerId     String             @unique @map("controller_id") @db.Uuid
+  deviceIdentifier String             @unique @map("device_identifier")
+  firmwareVersion  String             @map("firmware_version")
+  status           GatewayStatus      @default(ONLINE)
+  lastHeartbeatAt  DateTime           @default(now()) @map("last_heartbeat_at")
+
+  controller  Controller          @relation(fields: [controllerId], references: [id], onDelete: Cascade)
+  credentials GatewayCredential[]
+
+  @@map("gateways")
+}
+
+model GatewayCredential {
+  id                  String   @id @default(uuid()) @db.Uuid
+  gatewayId           String   @map("gateway_id") @db.Uuid
+  credentialReference String   @map("credential_reference")
+  revoked             Boolean  @default(false)
+  issuedAt            DateTime @default(now()) @map("issued_at")
+
+  gateway Gateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+
+  @@map("gateway_credentials")
+}
+
+enum CapabilityLevel {
+  SUPPORTED
+  UNSUPPORTED
+  OEM_DEPENDENT
+  SENSOR_REQUIRED
+}
+
+model ElevatorCapability {
+  id            String          @id @default(uuid()) @db.Uuid
+  elevatorId    String          @map("elevator_id") @db.Uuid
+  capabilityKey String          @map("capability_key")
+  status        CapabilityLevel @default(SUPPORTED)
+
+  elevator Elevator @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+
+  @@unique([elevatorId, capabilityKey])
+  @@map("elevator_capabilities")
+}
+
+// ==========================================
+// 5. COMMANDS, CALLS & BOOKINGS
+// ==========================================
+
+enum RemoteCommandType {
+  DISPATCH_CALL
+  PARK_FLOOR
+  SET_SERVICE_MODE
+  DOOR_HOLD
+  CLEAR_FAULT
+}
+
+enum RemoteCommandStatus {
+  REQUESTED
+  VALIDATING
+  AWAITING_APPROVAL
+  QUEUED
+  SENT
+  ACKNOWLEDGED
+  EXECUTING
+  VERIFIED
+  COMPLETED
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+model ElevatorCommand {
+  id             String              @id @default(uuid()) @db.Uuid
+  organisationId String              @map("organisation_id") @db.Uuid
+  buildingId     String              @map("building_id") @db.Uuid
+  elevatorId     String              @map("elevator_id") @db.Uuid
+  requestedById  String              @map("requested_by_id") @db.Uuid
+  commandType    RemoteCommandType   @map("command_type")
+  parameters     Json
+  correlationId  String              @unique @map("correlation_id")
+  idempotencyKey String              @unique @map("idempotency_key")
+  status         RemoteCommandStatus @default(REQUESTED)
+  expiresAt      DateTime            @map("expires_at")
+  failureReason  String?             @map("failure_reason")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  completedAt    DateTime?           @map("completed_at")
+
+  organisation Organisation       @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  building     Building           @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  elevator     Elevator           @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  requestedBy  User               @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  approvals    CommandApproval[]
+  events       CommandEvent[]
+
+  @@index([organisationId])
+  @@index([elevatorId])
+  @@map("elevator_commands")
+}
+
+model CommandApproval {
+  id        String   @id @default(uuid()) @db.Uuid
+  commandId String   @map("command_id") @db.Uuid
+  approverId String  @map("approver_id") @db.Uuid
+  decision  String
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  command  ElevatorCommand @relation(fields: [commandId], references: [id], onDelete: Cascade)
+  approver User            @relation(fields: [approverId], references: [id], onDelete: Cascade)
+
+  @@map("command_approvals")
+}
+
+model CommandEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  commandId  String   @map("command_id") @db.Uuid
+  eventType  String   @map("event_type")
+  payload    Json?
+  timestamp  DateTime @default(now())
+
+  command ElevatorCommand @relation(fields: [commandId], references: [id], onDelete: Cascade)
+
+  @@map("command_events")
+}
+
+enum CallType {
+  LANDING
+  DESTINATION
+  VIP
+}
+
+enum CallStatus {
+  REQUESTED
+  VALIDATED
+  DISPATCHED
+  ASSIGNED
+  ARRIVED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
+model ElevatorCall {
+  id               String     @id @default(uuid()) @db.Uuid
+  organisationId   String     @map("organisation_id") @db.Uuid
+  buildingId       String     @map("building_id") @db.Uuid
+  elevatorId       String?    @map("elevator_id") @db.Uuid
+  userId           String     @map("user_id") @db.Uuid
+  pickupFloor      Int        @map("pickup_floor")
+  destinationFloor Int?       @map("destination_floor")
+  callType         CallType   @default(LANDING) @map("call_type")
+  status           CallStatus @default(REQUESTED)
+  createdAt        DateTime   @default(now()) @map("created_at")
+  arrivedAt        DateTime?  @map("arrived_at")
+  completedAt      DateTime?  @map("completed_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  building     Building     @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  elevator     Elevator?    @relation(fields: [elevatorId], references: [id], onDelete: SetNull)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events       CallEvent[]
+
+  @@map("elevator_calls")
+}
+
+model CallEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  callId    String   @map("call_id") @db.Uuid
+  eventType String   @map("event_type")
+  timestamp DateTime @default(now())
+
+  call ElevatorCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@map("call_events")
+}
+
+enum BookingPurpose {
+  MOVING
+  FURNITURE_DELIVERY
+  GOODS
+  COMMERCIAL_DELIVERY
+  SERVICE_MAINTENANCE
+}
+
+enum BookingStatus {
+  REQUESTED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+model Booking {
+  id              String         @id @default(uuid()) @db.Uuid
+  organisationId  String         @map("organisation_id") @db.Uuid
+  buildingId      String         @map("building_id") @db.Uuid
+  elevatorId      String         @map("elevator_id") @db.Uuid
+  userId          String         @map("user_id") @db.Uuid
+  purpose         BookingPurpose
+  startTime       DateTime       @map("start_time")
+  endTime         DateTime       @map("end_time")
+  contactName     String         @map("contact_name")
+  contactPhone    String         @map("contact_phone")
+  status          BookingStatus  @default(REQUESTED)
+  rejectionReason String?        @map("rejection_reason")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  organisation Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  building     Building          @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  elevator     Elevator          @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approvals    BookingApproval[]
+
+  @@index([organisationId])
+  @@index([elevatorId, startTime, endTime])
+  @@map("bookings")
+}
+
+model BookingApproval {
+  id         String   @id @default(uuid()) @db.Uuid
+  bookingId  String   @map("booking_id") @db.Uuid
+  approverId String   @map("approver_id") @db.Uuid
+  decision   String
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  approver User    @relation(fields: [approverId], references: [id], onDelete: Cascade)
+
+  @@map("booking_approvals")
+}
+
+// ==========================================
+// 6. MAINTENANCE, WORK ORDERS & CHECKLISTS
+// ==========================================
+
+model MaintenancePlan {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String   @map("organisation_id") @db.Uuid
+  elevatorId     String   @map("elevator_id") @db.Uuid
+  title          String
+  frequencyDays  Int      @default(30) @map("frequency_days")
+  nextDueDate    DateTime @map("next_due_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organisation Organisation           @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  elevator     Elevator               @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  workOrders   MaintenanceWorkOrder[]
+
+  @@map("maintenance_plans")
+}
+
+enum WorkOrderType {
+  PREVENTIVE
+  BREAKDOWN
+  INSPECTION
+}
+
+enum PriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum WorkOrderStatus {
+  SCHEDULED
+  DISPATCHED
+  IN_PROGRESS
+  AWAITING_PARTS
+  AWAITING_SUPERVISOR_APPROVAL
+  COMPLETED
+  CANCELLED
+}
+
+model MaintenanceWorkOrder {
+  id                   String          @id @default(uuid()) @db.Uuid
+  organisationId       String          @map("organisation_id") @db.Uuid
+  buildingId           String          @map("building_id") @db.Uuid
+  elevatorId           String          @map("elevator_id") @db.Uuid
+  planId               String?         @map("plan_id") @db.Uuid
+  orderNumber          String          @unique @map("order_number")
+  type                 WorkOrderType   @default(PREVENTIVE)
+  priority             PriorityLevel   @default(MEDIUM)
+  assignedTechnicianId String?         @map("assigned_technician_id") @db.Uuid
+  status               WorkOrderStatus @default(SCHEDULED)
+  slaDeadline          DateTime?       @map("sla_deadline")
+  startedAt            DateTime?       @map("started_at")
+  completedAt          DateTime?       @map("completed_at")
+  createdAt            DateTime        @default(now()) @map("created_at")
+
+  organisation       Organisation           @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  building           Building               @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  elevator           Elevator               @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  plan               MaintenancePlan?       @relation(fields: [planId], references: [id], onDelete: SetNull)
+  assignedTechnician User?                  @relation("AssignedTechnician", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
+  checklists         MaintenanceChecklist[]
+  partsUsed          MaintenancePart[]
+  logs               MaintenanceLog[]
+
+  @@index([organisationId])
+  @@index([assignedTechnicianId])
+  @@map("maintenance_work_orders")
+}
+
+model MaintenanceChecklist {
+  id                   String    @id @default(uuid()) @db.Uuid
+  workOrderId          String    @map("work_order_id") @db.Uuid
+  checklistType        String    @map("checklist_type")
+  signedByTechnician   Boolean   @default(false) @map("signed_by_technician")
+  technicianSignedAt   DateTime? @map("technician_signed_at")
+  approvedBySupervisorId String? @map("approved_by_supervisor_id") @db.Uuid
+
+  workOrder  MaintenanceWorkOrder         @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  supervisor User?                        @relation("SupervisorApprover", fields: [approvedBySupervisorId], references: [id], onDelete: SetNull)
+  results    MaintenanceChecklistResult[]
+
+  @@map("maintenance_checklists")
+}
+
+model MaintenanceChecklistResult {
+  id               String  @id @default(uuid()) @db.Uuid
+  checklistId      String  @map("checklist_id") @db.Uuid
+  itemKey          String  @map("item_key")
+  category         String
+  expectedStandard String  @map("expected_standard")
+  actualReading    String  @map("actual_reading")
+  passFailStatus   String  @map("pass_fail_status")
+  notes            String?
+  photoUrl         String? @map("photo_url")
+
+  checklist MaintenanceChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_checklist_results")
+}
+
+model SparePart {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String   @map("organisation_id") @db.Uuid
+  name           String
+  partSku        String   @unique @map("part_sku")
+  manufacturer   String
+  stockQuantity  Int      @default(0) @map("stock_quantity")
+  minThreshold   Int      @default(5) @map("min_threshold")
+  unitCost       Float    @default(0.0) @map("unit_cost")
+
+  organisation     Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  maintenanceParts MaintenancePart[]
+
+  @@map("spare_parts")
+}
+
+model MaintenancePart {
+  id          String @id @default(uuid()) @db.Uuid
+  workOrderId String @map("work_order_id") @db.Uuid
+  partId      String @map("part_id") @db.Uuid
+  quantity    Int    @default(1)
+
+  workOrder MaintenanceWorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  part      SparePart            @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_parts")
+}
+
+model MaintenanceLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  elevatorId  String   @map("elevator_id") @db.Uuid
+  workOrderId String?  @map("work_order_id") @db.Uuid
+  summary     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  elevator  Elevator              @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  workOrder MaintenanceWorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+
+  @@map("maintenance_logs")
+}
+
+model ServiceContract {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String   @map("organisation_id") @db.Uuid
+  elevatorId     String   @map("elevator_id") @db.Uuid
+  vendorName     String   @map("vendor_name")
+  contractType   String   @map("contract_type")
+  startDate      DateTime @map("start_date")
+  expiryDate     DateTime @map("expiry_date")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  elevator     Elevator     @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+
+  @@map("service_contracts")
+}
+
+// ==========================================
+// 7. FAULTS, ALARMS & INCIDENTS
+// ==========================================
+
+enum SeverityLevel {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model FaultEvent {
+  id             String        @id @default(uuid()) @db.Uuid
+  organisationId String        @map("organisation_id") @db.Uuid
+  elevatorId     String        @map("elevator_id") @db.Uuid
+  faultCode      String        @map("fault_code")
+  severity       SeverityLevel @default(WARNING)
+  description    String
+  isActive       Boolean       @default(true) @map("is_active")
+  detectedAt     DateTime      @default(now()) @map("detected_at")
+  clearedAt      DateTime?     @map("cleared_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  elevator     Elevator     @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId])
+  @@index([elevatorId, isActive])
+  @@map("fault_events")
+}
+
+model AlarmEvent {
+  id                 String        @id @default(uuid()) @db.Uuid
+  organisationId     String        @map("organisation_id") @db.Uuid
+  elevatorId         String        @map("elevator_id") @db.Uuid
+  alarmType          String        @map("alarm_type")
+  severity           SeverityLevel @default(CRITICAL)
+  acknowledgedByUserId String?     @map("acknowledged_by_user_id") @db.Uuid
+  acknowledgedAt     DateTime?     @map("acknowledged_at")
+  timestamp          DateTime      @default(now())
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  elevator     Elevator     @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  acknowledgedBy User?      @relation("AlarmAcknowledgedBy", fields: [acknowledgedByUserId], references: [id], onDelete: SetNull)
+
+  @@map("alarm_events")
+}
+
+enum IncidentStatus {
+  NEW
+  ASSIGNED
+  RESPONDING
+  CONTAINED
+  RESOLVED
+  CLOSED
+}
+
+model Incident {
+  id                 String         @id @default(uuid()) @db.Uuid
+  organisationId     String         @map("organisation_id") @db.Uuid
+  buildingId         String         @map("building_id") @db.Uuid
+  elevatorId         String         @map("elevator_id") @db.Uuid
+  incidentNumber     String         @unique @map("incident_number")
+  incidentType       String         @map("incident_type")
+  severity           String         @default("P1_CRITICAL")
+  status             IncidentStatus @default(NEW)
+  assignedToUserId   String?        @map("assigned_to_user_id") @db.Uuid
+  passengersTrapped  Int            @default(0) @map("passengers_trapped")
+  slaDeadline        DateTime?      @map("sla_deadline")
+  resolvedAt         DateTime?      @map("resolved_at")
+  createdAt          DateTime       @default(now()) @map("created_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  building     Building     @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  elevator     Elevator     @relation(fields: [elevatorId], references: [id], onDelete: Cascade)
+  assignedTo   User?        @relation("IncidentAssignedUser", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId])
+  @@map("incidents")
+}
+
+// ==========================================
+// 8. AUDIT & NOTIFICATIONS
+// ==========================================
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String?  @map("organisation_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  action         String
+  entityName     String   @map("entity_name")
+  entityId       String   @map("entity_id")
+  beforeState    Json?    @map("before_state")
+  afterState     Json?    @map("after_state")
+  ipAddress      String?  @map("ip_address")
+  correlationId  String?  @map("correlation_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organisation Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId])
+  @@index([entityName, entityId])
+  @@map("audit_logs")
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+model Notification {
+  id             String              @id @default(uuid()) @db.Uuid
+  organisationId String              @map("organisation_id") @db.Uuid
+  userId         String              @map("user_id") @db.Uuid
+  channel        NotificationChannel @default(IN_APP)
+  type           String
+  title          String
+  message        String
+  isRead         Boolean             @default(false) @map("is_read")
+  createdAt      DateTime            @default(now()) @map("created_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, userId, isRead])
+  @@map("notifications")
+}
+

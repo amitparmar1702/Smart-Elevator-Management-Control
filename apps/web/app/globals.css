@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-page: #EEF0F6;
+    --bg-card: #FFFFFF;
+    --border-card: #DCDFEA;
+    --shadow-card: 0 1px 3px rgba(30, 34, 50, 0.06);
+    --text-main: #1E2232;
+    --text-muted: #5D6375;
+    --primary-purple: #433690;
+    --primary-purple-hover: #352A75;
+    --primary-purple-text: #FFFFFF;
+    --sidebar-bg: #FFFFFF;
+    --sidebar-text: #5D6375;
+    --sidebar-hover: #F3F5FA;
+    --sidebar-active: #E6E3F7;
+    --sidebar-marker: #433690;
+    --sidebar-border: #DCDFEA;
+    --topbar-bg: #FFFFFF;
+    --topbar-border: #DCDFEA;
+    --status-running-text: #15804D;
+    --status-running-bg: #DCEFE4;
+    --status-warning-text: #9C5C00;
+    --status-warning-bg: #F6E9D2;
+    --status-alarm-text: #C92D29;
+    --status-alarm-bg: #F8DDDC;
+    --status-maint-text: #5543C0;
+    --status-maint-bg: #E6E3F7;
+    --status-offline-text: #66707B;
+    --status-offline-bg: #E3E6E9;
+  }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background-image: radial-gradient(rgba(67, 54, 144, 0.07) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-attachment: fixed;
+  }
+}
+
+.font-floor {
+  font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+.card-shell {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+
+/* Bespoke Luminous Light Cockpit Card */
+.luminous-cockpit-card {
+  background: #FFFFFF;
+  border: 1px solid #DCE1EE;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px -2px rgba(67, 54, 144, 0.05), 0 2px 6px -1px rgba(30, 34, 50, 0.04);
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luminous-cockpit-card:hover {
+  border-color: #C7BFF0;
+  box-shadow: 0 8px 30px -4px rgba(67, 54, 144, 0.09), 0 4px 10px -2px rgba(30, 34, 50, 0.05);
+}
+
+/* CAD Blueprint Technical Grid Pattern */
+.cad-blueprint-grid {
+  background-color: #F8FAFD;
+  background-image: 
+    linear-gradient(to right, rgba(67, 54, 144, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(67, 54, 144, 0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Gauge Needle Smooth Motion */
+.gauge-needle {
+  transform-origin: 50% 50%;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Soft Light Pulses */
+.glow-ring-green {
+  box-shadow: 0 0 0 3px rgba(21, 128, 77, 0.15);
+}
+
+.glow-ring-purple {
+  box-shadow: 0 0 0 3px rgba(67, 54, 144, 0.15);
+}
+
+.glow-ring-amber {
+  box-shadow: 0 0 0 3px rgba(245, 165, 36, 0.2);
+}
+
+.sensor-tile {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  transition: all 0.2s ease;
+}
+
+.sensor-tile.fault {
+  background: #F8DDDC;
+  border-color: #C92D29;
+  color: #C92D29;
+}
+
+/* Sleek custom scrollbars for tables and drawers */
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.overflow-x-auto::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #F3F5FA;
+  border-radius: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #DCDFEA;
+  border-radius: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #B4B9CB;
+}

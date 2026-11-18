@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: elevateos-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: elevateos_secret
+      POSTGRES_DB: elevateos_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: elevateos-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  emqx:
+    image: emqx/emqx:5.3.2
+    container_name: elevateos-emqx
+    restart: always
+    ports:
+      - "1883:1883"      # MQTT TCP
+      - "8883:8883"      # MQTT TLS
+      - "8083:8083"      # MQTT WebSocket
+      - "18083:18083"    # EMQX Management Dashboard
+    volumes:
+      - emqx_data:/opt/emqx/data
+    environment:
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: "admin"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  emqx_data:
+    driver: local
+
