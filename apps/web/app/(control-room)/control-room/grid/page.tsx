@@ -273,8 +273,11 @@ export default function ControlRoomGridPage() {
           className="space-y-4"
         >
           <div>
-            <label className="block text-xs font-semibold text-[#1E2232] mb-1">Target Hoistway / Elevator Bank</label>
+            <label htmlFor="escalation-target" className="block text-xs font-semibold text-[#1E2232] mb-1">Target Hoistway / Elevator Bank</label>
             <select
+              id="escalation-target"
+              name="escalationCar"
+              suppressHydrationWarning
               value={escalationCar}
               onChange={(e) => setEscalationCar(e.target.value)}
               className="w-full text-xs h-10 px-3 bg-white border border-[#DCDFEA] rounded-[6px] text-[#1E2232]"
@@ -288,8 +291,11 @@ export default function ControlRoomGridPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1E2232] mb-1">Emergency Category</label>
+            <label htmlFor="escalation-reason" className="block text-xs font-semibold text-[#1E2232] mb-1">Emergency Category</label>
             <select
+              id="escalation-reason"
+              name="escalationReason"
+              suppressHydrationWarning
               value={escalationReason}
               onChange={(e) => setEscalationReason(e.target.value)}
               className="w-full text-xs h-10 px-3 bg-white border border-[#DCDFEA] rounded-[6px] text-[#1E2232]"

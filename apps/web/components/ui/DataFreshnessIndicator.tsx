@@ -42,9 +42,9 @@ export function DataFreshnessIndicator({
   // Tier 3: > 600s -> Red dot, "Connection lost"
   if (secondsAgo < 120) {
     return (
-      <div className={`inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-md bg-page border border-card-border text-main ${className}`}>
+      <div suppressHydrationWarning className={`inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-md bg-page border border-card-border text-main ${className}`}>
         <span className="h-2 w-2 rounded-full bg-st-running animate-pulse" />
-        <span>Live, updated {secondsAgo === 0 ? 'just now' : `${secondsAgo}s ago`}</span>
+        <span suppressHydrationWarning>Live, updated {secondsAgo === 0 ? 'just now' : `${secondsAgo}s ago`}</span>
       </div>
     );
   }
@@ -52,18 +52,18 @@ export function DataFreshnessIndicator({
   if (secondsAgo <= 600) {
     const minutes = Math.floor(secondsAgo / 60);
     return (
-      <div className={`inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-md bg-st-warning-bg border border-amber-300 text-st-warning ${className}`}>
+      <div suppressHydrationWarning className={`inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-md bg-st-warning-bg border border-amber-300 text-st-warning ${className}`}>
         <span className="h-2 w-2 rounded-full bg-st-warning" />
-        <span>No data for {minutes} min</span>
+        <span suppressHydrationWarning>No data for {minutes} min</span>
       </div>
     );
   }
 
   return (
-    <div className={`inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-md bg-st-alarm-bg border border-red-300 text-st-alarm font-bold ${className}`}>
+    <div suppressHydrationWarning className={`inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-md bg-st-alarm-bg border border-red-300 text-st-alarm font-bold ${className}`}>
       <span className="h-2 w-2 rounded-full bg-st-alarm" />
       <WifiOff className="h-3 w-3" />
-      <span>Connection lost</span>
+      <span suppressHydrationWarning>Connection lost</span>
     </div>
   );
 }

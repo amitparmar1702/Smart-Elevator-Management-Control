@@ -194,13 +194,16 @@ export default function BuildingsManagementPage() {
         title="Register Property / Building Complex"
         subtitle="Provision a new facility record, floor hierarchy, and access boundaries"
       >
-        <form onSubmit={handleAddBuilding} className="space-y-4">
+        <form onSubmit={handleAddBuilding} suppressHydrationWarning className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">Building Name</label>
+              <label htmlFor="bldg-name" className="block text-xs font-semibold text-[#1E2232] mb-1">Building Name</label>
               <input
+                id="bldg-name"
+                name="bldgName"
                 type="text"
                 required
+                suppressHydrationWarning
                 placeholder="e.g. Skyline Tower South"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -209,9 +212,12 @@ export default function BuildingsManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">Facility Code</label>
+              <label htmlFor="bldg-code" className="block text-xs font-semibold text-[#1E2232] mb-1">Facility Code</label>
               <input
+                id="bldg-code"
+                name="bldgCode"
                 type="text"
+                suppressHydrationWarning
                 placeholder="e.g. SKY-TWR-S"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
@@ -221,10 +227,13 @@ export default function BuildingsManagementPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1E2232] mb-1">Physical Address</label>
+            <label htmlFor="bldg-address" className="block text-xs font-semibold text-[#1E2232] mb-1">Physical Address</label>
             <input
+              id="bldg-address"
+              name="bldgAddress"
               type="text"
               required
+              suppressHydrationWarning
               placeholder="e.g. 108 Financial Boulevard, Sector 5"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
@@ -234,11 +243,14 @@ export default function BuildingsManagementPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">Total Floors</label>
+              <label htmlFor="bldg-floors" className="block text-xs font-semibold text-[#1E2232] mb-1">Total Floors</label>
               <input
+                id="bldg-floors"
+                name="bldgFloors"
                 type="number"
                 min="1"
                 max="120"
+                suppressHydrationWarning
                 value={floors}
                 onChange={(e) => setFloors(Number(e.target.value))}
                 className="w-full text-xs h-10 px-3 bg-white border border-[#DCDFEA] rounded-[6px] text-[#1E2232]"
@@ -246,11 +258,14 @@ export default function BuildingsManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">Elevator Shafts</label>
+              <label htmlFor="bldg-elevators" className="block text-xs font-semibold text-[#1E2232] mb-1">Elevator Shafts</label>
               <input
+                id="bldg-elevators"
+                name="bldgElevators"
                 type="number"
                 min="1"
                 max="30"
+                suppressHydrationWarning
                 value={elevatorsCount}
                 onChange={(e) => setElevatorsCount(Number(e.target.value))}
                 className="w-full text-xs h-10 px-3 bg-white border border-[#DCDFEA] rounded-[6px] text-[#1E2232]"
@@ -258,9 +273,12 @@ export default function BuildingsManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">Facility Manager</label>
+              <label htmlFor="bldg-manager" className="block text-xs font-semibold text-[#1E2232] mb-1">Facility Manager</label>
               <input
+                id="bldg-manager"
+                name="bldgManager"
                 type="text"
+                suppressHydrationWarning
                 placeholder="Manager name"
                 value={manager}
                 onChange={(e) => setManager(e.target.value)}
