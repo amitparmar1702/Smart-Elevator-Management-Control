@@ -48,6 +48,7 @@ const demoPersonas: DemoPersona[] = [
 export default function LoginPage() {
   const router = useRouter();
   const { setUser, switchRole } = useAuthStore();
+  const [isMounted, setIsMounted] = useState(false);
 
   const [email, setEmail] = useState('admin@apexproperties.com');
   const [password, setPassword] = useState('Elevate@2026');
@@ -56,6 +57,10 @@ export default function LoginPage() {
   const [isMfaStep, setIsMfaStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const executeSignIn = (account: DemoPersona) => {
     audioService.playArrivalChime();
@@ -134,7 +139,7 @@ export default function LoginPage() {
       </div>
 
       {/* Main Single-Card Container (Eliminates all scrolling & overcrowding) */}
-      <div className="w-full max-w-md bg-white p-6 sm:p-7 shadow-card border border-[#DCDFEA] rounded-[10px]">
+      <div suppressHydrationWarning className="w-full max-w-md bg-white p-6 sm:p-7 shadow-card border border-[#DCDFEA] rounded-[10px]">
         
         {error && (
           <div className="mb-4 p-2.5 rounded-[6px] bg-[#F8DDDC] border border-[#C92D29]/30 text-xs text-[#C92D29] flex items-center space-x-2">
@@ -144,7 +149,7 @@ export default function LoginPage() {
         )}
 
         {/* 1-Click Demo Persona Selector Capsule */}
-        <div className="mb-5 p-3 rounded-[8px] bg-[#F4F2FC] border border-[#433690]/20">
+        <div suppressHydrationWarning className="mb-5 p-3 rounded-[8px] bg-[#F4F2FC] border border-[#433690]/20">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-[#433690] uppercase tracking-wider flex items-center space-x-1">
               <Sparkles className="h-3.5 w-3.5 text-[#433690]" />
@@ -157,6 +162,9 @@ export default function LoginPage() {
 
           <div className="flex space-x-2">
             <select
+              id="demo-role-select"
+              name="demoRole"
+              suppressHydrationWarning
               value={selectedDemoRole}
               onChange={handleRoleDropdownChange}
               className="flex-1 h-9 text-xs bg-white border border-[#DCDFEA] rounded-[6px] px-2.5 font-medium text-[#1E2232] focus:ring-2 focus:ring-[#433690]"
@@ -182,9 +190,9 @@ export default function LoginPage() {
 
         {/* Standard Credentials Form */}
         {!isMfaStep ? (
-          <form onSubmit={handleLogin} className="space-y-3.5">
+          <form onSubmit={handleLogin} suppressHydrationWarning className="space-y-3.5">
             <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">
+              <label htmlFor="corporate-email" className="block text-xs font-semibold text-[#1E2232] mb-1">
                 Corporate Email
               </label>
               <div className="relative rounded-[8px]">
@@ -192,8 +200,12 @@ export default function LoginPage() {
                   <Mail className="h-4 w-4" />
                 </div>
                 <input
+                  id="corporate-email"
+                  name="email"
                   type="email"
+                  autoComplete="username"
                   required
+                  suppressHydrationWarning
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-9 pr-3 h-10 min-h-[40px] text-xs bg-white border border-[#DCDFEA] rounded-[8px] focus:ring-2 focus:ring-[#433690] text-[#1E2232]"
@@ -204,7 +216,7 @@ export default function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-[#1E2232]">
+                <label htmlFor="corporate-password" className="block text-xs font-semibold text-[#1E2232]">
                   Password
                 </label>
                 <Link href="/forgot-password" className="text-[11px] text-[#433690] hover:underline">
@@ -216,8 +228,12 @@ export default function LoginPage() {
                   <Lock className="h-4 w-4" />
                 </div>
                 <input
+                  id="corporate-password"
+                  name="password"
                   type="password"
+                  autoComplete="current-password"
                   required
+                  suppressHydrationWarning
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-9 pr-3 h-10 min-h-[40px] text-xs bg-white border border-[#DCDFEA] rounded-[8px] focus:ring-2 focus:ring-[#433690] text-[#1E2232]"
@@ -239,7 +255,7 @@ export default function LoginPage() {
           </form>
         ) : (
           /* MFA Step */
-          <form onSubmit={handleLogin} className="space-y-3 text-center">
+          <form onSubmit={handleLogin} suppressHydrationWarning className="space-y-3 text-center">
             <div className="inline-flex p-2 rounded-full bg-[#E6E3F7] text-[#433690] mb-1">
               <KeyRound className="h-5 w-5" />
             </div>
@@ -249,10 +265,12 @@ export default function LoginPage() {
             </p>
 
             <input
+              id="mfa-token"
+              name="mfaCode"
               type="text"
               maxLength={6}
               required
-              autoFocus
+              suppressHydrationWarning
               value={mfaCode}
               onChange={(e) => setMfaCode(e.target.value)}
               className="block w-full text-center tracking-widest text-lg font-mono h-11 border border-[#DCDFEA] rounded-[8px] bg-white focus:ring-2 focus:ring-[#433690] text-[#1E2232] font-bold"

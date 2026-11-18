@@ -33,13 +33,13 @@ export default function ForgotPasswordPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-white py-8 px-6 shadow-card border border-[#DCDFEA] rounded-[8px] sm:px-10">
           {!isSubmitted ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} suppressHydrationWarning className="space-y-4">
               <p className="text-xs text-[#5D6375] leading-relaxed">
                 Enter your verified enterprise email address. An automated cryptographic password reset token will be dispatched to your inbox.
               </p>
 
               <div>
-                <label className="block text-xs font-semibold text-[#1E2232] mb-1">
+                <label htmlFor="recovery-email" className="block text-xs font-semibold text-[#1E2232] mb-1">
                   Enterprise Email
                 </label>
                 <div className="relative rounded-[8px]">
@@ -47,8 +47,12 @@ export default function ForgotPasswordPage() {
                     <Mail className="h-4 w-4" />
                   </div>
                   <input
+                    id="recovery-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     required
+                    suppressHydrationWarning
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full pl-9 pr-3 h-10 min-h-[40px] text-xs bg-white border border-[#DCDFEA] rounded-[8px] focus:ring-2 focus:ring-[#433690] text-[#1E2232]"

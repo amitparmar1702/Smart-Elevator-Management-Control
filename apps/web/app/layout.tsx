@@ -49,7 +49,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-page text-main font-sans antialiased min-h-screen">
+      <body suppressHydrationWarning className="bg-page text-main font-sans antialiased min-h-screen">
         {children}
       </body>
     </html>
