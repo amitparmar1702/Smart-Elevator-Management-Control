@@ -25,11 +25,16 @@ export const ElevatorTrendCharts: React.FC<ElevatorTrendChartsProps> = ({
   elevatorId,
   dateRangePreset = '7d',
 }) => {
+  const [mounted, setMounted] = useState(false);
   const [motorCurrentData, setMotorCurrentData] = useState<TrendDataPoint[]>([]);
   const [tempData, setTempData] = useState<TrendDataPoint[]>([]);
   const [doorCyclesData, setDoorCyclesData] = useState<TrendDataPoint[]>([]);
   const [healthScoreData, setHealthScoreData] = useState<TrendDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,6 +59,16 @@ export const ElevatorTrendCharts: React.FC<ElevatorTrendChartsProps> = ({
       isMounted = false;
     };
   }, [elevatorId, dateRangePreset]);
+
+  if (!mounted) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-52 bg-[#EEF0F6]/60 rounded-[8px] animate-pulse border border-[#DCDFEA]" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

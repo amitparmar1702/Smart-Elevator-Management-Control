@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Activity, 
   ArrowUp, 
@@ -44,8 +45,11 @@ import { FloorHeatmap } from '@/components/elevator/FloorHeatmap';
 import { useTelemetryStore } from '@/stores/telemetryStore';
 import { ElevatorTelemetry } from '@elevateos/types';
 
-export default function LiveElevatorPage({ params }: { params: { id: string } }) {
+export default function LiveElevatorPage({ params }: { params?: { id: string } }) {
+  const router = useRouter();
+  const elevatorId = params?.id || 'elv-a-01';
   const { events, addEvent } = useTelemetryStore();
+  const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('trends');
   const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
   const [dateRangePreset, setDateRangePreset] = useState('7d');
@@ -64,8 +68,8 @@ export default function LiveElevatorPage({ params }: { params: { id: string } })
 
   // Simulated live car telemetry
   const [telemetry, setTelemetry] = useState<ElevatorTelemetry>({
-    elevatorId: params.id || 'elv-a-01',
-    timestamp: new Date().toISOString(),
+    elevatorId,
+    timestamp: '2026-11-18T05:30:00.000Z',
     floor: 4.0,
     targetFloor: null,
     direction: 'STATIONARY',
@@ -83,8 +87,17 @@ export default function LiveElevatorPage({ params }: { params: { id: string } })
     safetyChainClosed: true,
     emergencyStopActive: false,
     gatewayConnected: true,
-    lastUpdated: new Date().toISOString(),
+    lastUpdated: '2026-11-18T05:30:00.000Z',
   });
+
+  useEffect(() => {
+    setIsMounted(true);
+    setTelemetry((prev) => ({
+      ...prev,
+      timestamp: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+    }));
+  }, []);
 
   // Pre-seed 60 historical frames on component mount for instant blackbox scrubbing
   useEffect(() => {
@@ -94,7 +107,7 @@ export default function LiveElevatorPage({ params }: { params: { id: string } })
       const histTime = new Date(now - i * 1000).toISOString();
       const simulatedFloor = 1 + (Math.sin(i / 10) * 4 + 4);
       historyFrames.push({
-        elevatorId: params.id || 'elv-a-01',
+        elevatorId,
         timestamp: histTime,
         floor: parseFloat(simulatedFloor.toFixed(2)),
         targetFloor: i > 25 ? 8 : null,
@@ -117,15 +130,15 @@ export default function LiveElevatorPage({ params }: { params: { id: string } })
       });
     }
     setTelemetryHistory(historyFrames);
-  }, [params.id]);
+  }, [elevatorId]);
 
-  // Client-side live physics runner
+  // Client-side live physics runner (clean, un-nested state update)
   useEffect(() => {
     const timer = setInterval(() => {
       setTelemetry((prev) => {
         if (prev.targetFloor === null || Math.abs(prev.floor - prev.targetFloor) < 0.05) {
           const isAtTarget = prev.targetFloor !== null;
-          const updated: ElevatorTelemetry = {
+          return {
             ...prev,
             direction: 'STATIONARY',
             velocityMps: 0,
@@ -135,17 +148,13 @@ export default function LiveElevatorPage({ params }: { params: { id: string } })
             timestamp: new Date().toISOString(),
             lastUpdated: new Date().toISOString(),
           };
-
-          // Append to rolling history buffer
-          setTelemetryHistory((hist) => [...hist.slice(-59), updated]);
-          return updated;
         }
 
         const isGoingUp = prev.targetFloor > prev.floor;
         const speed = 0.25;
         const nextFloor = isGoingUp ? prev.floor + speed : prev.floor - speed;
 
-        const updated: ElevatorTelemetry = {
+        return {
           ...prev,
           direction: isGoingUp ? 'UP' : 'DOWN',
           velocityMps: 2.5,
@@ -155,15 +164,18 @@ export default function LiveElevatorPage({ params }: { params: { id: string } })
           timestamp: new Date().toISOString(),
           lastUpdated: new Date().toISOString(),
         };
-
-        // Append to rolling history buffer
-        setTelemetryHistory((hist) => [...hist.slice(-59), updated]);
-        return updated;
       });
     }, 400);
 
     return () => clearInterval(timer);
   }, []);
+
+  // Safely sync history buffer on telemetry update outside of the updater function
+  useEffect(() => {
+    if (isMounted) {
+      setTelemetryHistory((hist) => [...hist.slice(-59), telemetry]);
+    }
+  }, [telemetry, isMounted]);
 
   // Blackbox Replay Playback timer
   useEffect(() => {
@@ -310,7 +322,7 @@ export default function LiveElevatorPage({ params }: { params: { id: string } })
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.location.href = '/elevators/comparison'}
+            onClick={() => router.push('/elevators/comparison')}
           >
             Compare fleet
           </Button>
