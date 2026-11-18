@@ -292,11 +292,14 @@ export default function CallsManagementPage() {
         title="Issue Destination Dispatch Call"
         subtitle="Transmit a targeted destination call to the elevator group controller with ETA scheduling"
       >
-        <form onSubmit={handleDispatchCall} className="space-y-4">
+        <form onSubmit={handleDispatchCall} suppressHydrationWarning className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">Pickup Floor</label>
+              <label htmlFor="pickup-floor" className="block text-xs font-semibold text-[#1E2232] mb-1">Pickup Floor</label>
               <select
+                id="pickup-floor"
+                name="pickupFloor"
+                suppressHydrationWarning
                 value={pickupFloor}
                 onChange={(e) => setPickupFloor(Number(e.target.value))}
                 className="w-full text-xs h-10 px-3 bg-white border border-[#DCDFEA] rounded-[6px] text-[#1E2232]"
@@ -310,8 +313,11 @@ export default function CallsManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">Destination Floor</label>
+              <label htmlFor="dest-floor" className="block text-xs font-semibold text-[#1E2232] mb-1">Destination Floor</label>
               <select
+                id="dest-floor"
+                name="destFloor"
+                suppressHydrationWarning
                 value={destFloor}
                 onChange={(e) => setDestFloor(Number(e.target.value))}
                 className="w-full text-xs h-10 px-3 bg-white border border-[#DCDFEA] rounded-[6px] text-[#1E2232]"
@@ -326,8 +332,11 @@ export default function CallsManagementPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1E2232] mb-1">Dispatch Priority</label>
+            <label htmlFor="dispatch-priority" className="block text-xs font-semibold text-[#1E2232] mb-1">Dispatch Priority</label>
             <select
+              id="dispatch-priority"
+              name="priorityType"
+              suppressHydrationWarning
               value={priorityType}
               onChange={(e) => setPriorityType(e.target.value)}
               className="w-full text-xs h-10 px-3 bg-white border border-[#DCDFEA] rounded-[6px] text-[#1E2232]"

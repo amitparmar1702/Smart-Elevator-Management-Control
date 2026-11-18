@@ -197,12 +197,15 @@ export default function BookingsManagementPage() {
         title="Create Service Elevator Reservation"
         subtitle="Reserve freight elevator for dedicated cargo or maintenance use"
       >
-        <form onSubmit={handleCreate} className="space-y-4">
+        <form onSubmit={handleCreate} suppressHydrationWarning className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-main mb-1.5">
+            <label htmlFor="booking-elevator" className="block text-xs font-semibold text-main mb-1.5">
               Select Dedicated Elevator:
             </label>
             <select
+              id="booking-elevator"
+              name="formElevator"
+              suppressHydrationWarning
               value={formElevator}
               onChange={(e) => setFormElevator(e.target.value)}
               className="w-full text-xs h-10 px-3 border border-card-border rounded-lg bg-page text-main font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -213,10 +216,13 @@ export default function BookingsManagementPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-main mb-1.5">
+            <label htmlFor="booking-purpose" className="block text-xs font-semibold text-main mb-1.5">
               Reservation Purpose:
             </label>
             <select
+              id="booking-purpose"
+              name="formPurpose"
+              suppressHydrationWarning
               value={formPurpose}
               onChange={(e) => setFormPurpose(e.target.value)}
               className="w-full text-xs h-10 px-3 border border-card-border rounded-lg bg-page text-main font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -229,12 +235,15 @@ export default function BookingsManagementPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-main mb-1.5">
+            <label htmlFor="booking-contact" className="block text-xs font-semibold text-main mb-1.5">
               Contact Person / Flat Number:
             </label>
             <input
+              id="booking-contact"
+              name="formContact"
               type="text"
               required
+              suppressHydrationWarning
               value={formContact}
               onChange={(e) => setFormContact(e.target.value)}
               placeholder="e.g. Rahul Verma (Apt 804)"

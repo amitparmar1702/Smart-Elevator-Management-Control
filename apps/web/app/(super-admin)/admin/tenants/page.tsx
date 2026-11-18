@@ -10,5 +10,9 @@ export default function TenantsRedirectPage() {
     router.replace('/admin/organisations');
   }, [router]);
 
-  return null;
+  return (
+    <div className="min-h-screen bg-[#EEF0F6] flex items-center justify-center text-xs text-[#5D6375] font-mono">
+      Redirecting to Tenant Organisations...
+    </div>
+  );
 }
