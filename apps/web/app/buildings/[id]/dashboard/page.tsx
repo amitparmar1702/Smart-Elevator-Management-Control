@@ -10,7 +10,8 @@ import { Modal } from '@/components/ui/Modal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { audioService } from '@/lib/audioService';
 
-export default function BuildingManagerDashboard({ params }: { params: { id: string } }) {
+export default function BuildingManagerDashboard({ params }: { params?: { id: string } }) {
+  const buildingId = params?.id || 'bldg-apex-tower';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [visitorName, setVisitorName] = useState('');
   const [hostTenant, setHostTenant] = useState('Acme Corporation (Floor 12)');
