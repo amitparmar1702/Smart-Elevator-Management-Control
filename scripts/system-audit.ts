@@ -33,11 +33,15 @@ const routesToAudit: RouteCheck[] = [
   { name: 'Operations: Elevator Calls Log', url: 'http://127.0.0.1:3000/operations/calls', expectedStatus: 200 },
   { name: 'Operations: Floor Access Matrix', url: 'http://127.0.0.1:3000/operations/floor-access', expectedStatus: 200 },
   { name: 'Operations: Dispatch Simulator', url: 'http://127.0.0.1:3000/operations/dispatch-simulator', expectedStatus: 200 },
+  { name: 'Operations: Parking & Energy', url: 'http://127.0.0.1:3000/operations/parking', expectedStatus: 200 },
   { name: 'Access Policies Route Alias', url: 'http://127.0.0.1:3000/access/policies', expectedStatus: 200 },
+  { name: 'Elevator Comparison Tool', url: 'http://127.0.0.1:3000/elevators/comparison', expectedStatus: 200 },
   
   // Maintenance & Field Service
   { name: 'Maintenance: Work Orders & SLA', url: 'http://127.0.0.1:3000/maintenance/work-orders', expectedStatus: 200 },
   { name: 'Technician: Mobile Job Checklist', url: 'http://127.0.0.1:3000/technician/dashboard', expectedStatus: 200 },
+  { name: 'Technician: Dedicated Mobile App', url: 'http://127.0.0.1:3000/technician/mobile', expectedStatus: 200 },
+  { name: 'Mobile PWA Portal Hub', url: 'http://127.0.0.1:3000/mobile', expectedStatus: 200 },
   
   // Resident & Safety
   { name: 'Resident: Touchless Hall Calls', url: 'http://127.0.0.1:3000/resident/dashboard', expectedStatus: 200 },
@@ -48,6 +52,8 @@ const routesToAudit: RouteCheck[] = [
   { name: 'Analytics: Fleet Availability Trends', url: 'http://127.0.0.1:3000/analytics/fleet', expectedStatus: 200 },
   { name: 'Analytics: Predictive Health & FFT Harmonics', url: 'http://127.0.0.1:3000/analytics/predictive', expectedStatus: 200 },
   { name: 'Audit: Immutable Compliance Logs', url: 'http://127.0.0.1:3000/audit/logs', expectedStatus: 200 },
+  { name: 'Statutory Reports Generator', url: 'http://127.0.0.1:3000/reports', expectedStatus: 200 },
+  { name: 'Settings & Notifications Hub', url: 'http://127.0.0.1:3000/settings/notifications', expectedStatus: 200 },
   
   // API & Swagger
   { name: 'NestJS REST API Docs (Swagger)', url: 'http://127.0.0.1:4000/api/docs/', expectedStatus: 200 },
