@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { DataFreshnessIndicator } from '@/components/ui/DataFreshnessIndicator';
+import { WeekStripDatePicker } from '@/components/ui/WeekStripDatePicker';
 import { audioService } from '@/lib/audioService';
 
 interface MonitoredCar {
@@ -95,6 +96,7 @@ const INITIAL_CARS: MonitoredCar[] = [
 
 export default function ControlRoomGridPage() {
   const [showEscalationModal, setShowEscalationModal] = useState(false);
+  const [selectedOperationalDate, setSelectedOperationalDate] = useState('2026-11-20');
   const [p1EmergencyActive, setP1EmergencyActive] = useState(false);
   const [escalationReason, setEscalationReason] = useState('PASSENGER_ENTRAPMENT');
   const [escalationCar, setEscalationCar] = useState('ALL');
@@ -375,6 +377,14 @@ export default function ControlRoomGridPage() {
           </Button>
         </div>
       )}
+
+      {/* Real-Time Operational Calendar Track */}
+      <div className="mb-6">
+        <WeekStripDatePicker
+          initialDate={selectedOperationalDate}
+          onDateChange={(d) => setSelectedOperationalDate(d)}
+        />
+      </div>
 
       {/* High-Density 4-Car Live Monitoring Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">

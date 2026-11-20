@@ -15,6 +15,7 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { WeekStripDatePicker } from '@/components/ui/WeekStripDatePicker';
 
 interface ParkingZonePolicy {
   id: string;
@@ -32,6 +33,7 @@ interface ParkingZonePolicy {
 
 export default function ParkingOptimizationPage() {
   const [savedNotification, setSavedNotification] = useState(false);
+  const [selectedScheduleDate, setSelectedScheduleDate] = useState('2026-11-20');
 
   // Default parking policies
   const [policies] = useState<ParkingZonePolicy[]>([
@@ -231,6 +233,14 @@ export default function ParkingOptimizationPage() {
 
         {/* Dynamic Sector Parking Cards */}
         <div>
+          {/* Week Calendar Profile Scheduler */}
+          <div className="mb-5">
+            <WeekStripDatePicker
+              initialDate={selectedScheduleDate}
+              onDateChange={(d) => setSelectedScheduleDate(d)}
+            />
+          </div>
+
           <h3 className="text-sm font-medium text-[#433690] uppercase tracking-wider mb-4">
             Automated Time-Window Parking Profiles
           </h3>
