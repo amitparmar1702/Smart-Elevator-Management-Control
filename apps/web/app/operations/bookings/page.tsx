@@ -16,9 +16,11 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
+import { WeekStripDatePicker } from '../../../components/ui/WeekStripDatePicker';
 
 export default function BookingsManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState('2026-11-20');
   const [bookings, setBookings] = useState([
     {
       id: 'BKG-4421',
@@ -134,6 +136,14 @@ export default function BookingsManagementPage() {
             Automated calendar slot isolation
           </span>
         </Card>
+      </div>
+
+      {/* Week Calendar Day Strip (Zero Text Collision Layout) */}
+      <div className="mb-6">
+        <WeekStripDatePicker
+          initialDate={selectedCalendarDate}
+          onDateChange={(d) => setSelectedCalendarDate(d)}
+        />
       </div>
 
       <Card noPadding>

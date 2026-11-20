@@ -11,6 +11,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { WeekStripDatePicker } from '@/components/ui/WeekStripDatePicker';
 import { audioService } from '@/lib/audioService';
 
 export default function ResidentDashboard() {
@@ -229,18 +230,15 @@ export default function ResidentDashboard() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-[#1E2232] mb-1">Reservation Date</label>
-              <input
-                type="date"
-                required
-                value={bookingDate}
-                onChange={(e) => setBookingDate(e.target.value)}
-                className="w-full text-xs h-10 px-3 bg-white border border-[#DCDFEA] rounded-[6px] text-[#1E2232]"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-[#1E2232]">Select Reservation Date</label>
+            <WeekStripDatePicker
+              initialDate={bookingDate}
+              onDateChange={(d) => setBookingDate(d)}
+            />
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-semibold text-[#1E2232] mb-1">Time Slot Window</label>
               <select
