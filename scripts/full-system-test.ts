@@ -27,7 +27,7 @@ function request(options: {
         path: options.path,
         method: options.method || 'GET',
         headers: options.headers || {},
-        timeout: 5000,
+        timeout: 12000,
       },
       (res) => {
         let body = '';
