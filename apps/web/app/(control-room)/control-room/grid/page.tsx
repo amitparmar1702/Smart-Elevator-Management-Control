@@ -111,7 +111,7 @@ export default function ControlRoomGridPage() {
     const timer = setInterval(() => {
       setCars((prevCars) =>
         prevCars.map((car) => {
-          // If P1 Emergency is active: all cars recall to Floor 1 (Lobby Level)
+          // 1. If P1 Emergency is active: all cars recall to Floor 1 (Lobby Level)
           if (p1EmergencyActive) {
             if (car.floor > 1) {
               return {
@@ -134,7 +134,6 @@ export default function ControlRoomGridPage() {
                 status: 'RECALL',
               };
             } else {
-              // At Floor 1: doors open, speed 0, load evacuated
               return {
                 ...car,
                 dir: 'STATIONARY',
@@ -147,92 +146,98 @@ export default function ControlRoomGridPage() {
             }
           }
 
-          // Normal autonomous movement simulation
-          if (car.id === 'elv-a-01') {
-            if (car.door === 'OPEN') {
-              return { ...car, door: 'CLOSED', target: 2, dir: 'DOWN', status: 'RUNNING' };
-            }
-            if (car.target !== null) {
-              if (car.floor < car.target) {
-                const nextFloor = car.floor + 1;
-                const arrived = nextFloor >= car.target;
-                return {
-                  ...car,
-                  floor: nextFloor,
-                  dir: arrived ? 'STATIONARY' : 'UP',
-                  speed: arrived ? 0.0 : 2.5,
-                  door: arrived ? 'OPEN' : 'CLOSED',
-                  target: arrived ? null : car.target,
-                  load: arrived ? Math.floor(Math.random() * 40 + 20) : car.load,
-                  status: arrived ? 'IDLE' : 'RUNNING',
-                };
-              } else if (car.floor > car.target) {
-                const nextFloor = car.floor - 1;
-                const arrived = nextFloor <= car.target;
-                return {
-                  ...car,
-                  floor: nextFloor,
-                  dir: arrived ? 'STATIONARY' : 'DOWN',
-                  speed: arrived ? 0.0 : 2.5,
-                  door: arrived ? 'OPEN' : 'CLOSED',
-                  target: arrived ? null : car.target,
-                  load: arrived ? Math.floor(Math.random() * 30 + 10) : car.load,
-                  status: arrived ? 'IDLE' : 'RUNNING',
-                };
-              }
-            } else {
-              // Pick next destination
-              const newTarget = car.floor <= 3 ? 12 : 2;
+          // 2. If single car is in RECALL status: recall to Floor 1
+          if (car.status === 'RECALL') {
+            if (car.floor > 1) {
               return {
                 ...car,
-                target: newTarget,
-                dir: newTarget > car.floor ? 'UP' : 'DOWN',
-                speed: 2.5,
+                floor: car.floor - 1,
+                dir: 'DOWN',
+                target: 1,
+                speed: 2.2,
                 door: 'CLOSED',
-                status: 'RUNNING',
+              };
+            } else if (car.floor < 1) {
+              return {
+                ...car,
+                floor: car.floor + 1,
+                dir: 'UP',
+                target: 1,
+                speed: 1.6,
+                door: 'CLOSED',
+              };
+            } else {
+              return {
+                ...car,
+                dir: 'STATIONARY',
+                target: null,
+                speed: 0.0,
+                door: 'OPEN',
+                load: 0,
               };
             }
           }
 
-          if (car.id === 'elv-a-03') {
-            if (car.door === 'OPEN') {
-              return { ...car, door: 'CLOSED', target: 7, dir: 'UP', status: 'RUNNING' };
+          // 3. If car has safety fault: halt movement
+          if (car.status === 'FAULT' || !car.safety) {
+            return {
+              ...car,
+              speed: 0.0,
+              dir: 'STATIONARY',
+            };
+          }
+
+          // 4. If car is at floor with doors open: close doors on next tick if stationary
+          if (car.door === 'OPEN') {
+            if (car.target !== null && car.target !== car.floor) {
+              return { ...car, door: 'CLOSED', dir: car.target > car.floor ? 'UP' : 'DOWN', speed: 2.0 };
             }
-            if (car.target !== null) {
-              if (car.floor > car.target) {
-                const nextFloor = car.floor - 1;
-                const arrived = nextFloor <= car.target;
-                return {
-                  ...car,
-                  floor: nextFloor,
-                  dir: arrived ? 'STATIONARY' : 'DOWN',
-                  speed: arrived ? 0.0 : 1.6,
-                  door: arrived ? 'OPEN' : 'CLOSED',
-                  target: arrived ? null : car.target,
-                  status: arrived ? 'IDLE' : 'RUNNING',
-                };
-              } else if (car.floor < car.target) {
-                const nextFloor = car.floor + 1;
-                const arrived = nextFloor >= car.target;
-                return {
-                  ...car,
-                  floor: nextFloor,
-                  dir: arrived ? 'STATIONARY' : 'UP',
-                  speed: arrived ? 0.0 : 1.6,
-                  door: arrived ? 'OPEN' : 'CLOSED',
-                  target: arrived ? null : car.target,
-                  status: arrived ? 'IDLE' : 'RUNNING',
-                };
+            return { ...car, door: 'CLOSED' };
+          }
+
+          // 5. If car has an active target floor: move towards it
+          if (car.target !== null) {
+            if (car.floor < car.target) {
+              const nextFloor = car.floor + 1;
+              const arrived = nextFloor >= car.target;
+              if (arrived) {
+                audioService.playArrivalChime();
               }
-            } else {
-              const newTarget = car.floor <= 0 ? 8 : -2;
               return {
                 ...car,
-                target: newTarget,
-                dir: newTarget > car.floor ? 'UP' : 'DOWN',
-                speed: 1.6,
-                door: 'CLOSED',
-                status: 'RUNNING',
+                floor: nextFloor,
+                dir: arrived ? 'STATIONARY' : 'UP',
+                speed: arrived ? 0.0 : 2.5,
+                door: arrived ? 'OPEN' : 'CLOSED',
+                target: arrived ? null : car.target,
+                status: arrived ? 'IDLE' : 'RUNNING',
+                load: arrived ? Math.floor(Math.random() * 35 + 15) : car.load,
+              };
+            } else if (car.floor > car.target) {
+              const nextFloor = car.floor - 1;
+              const arrived = nextFloor <= car.target;
+              if (arrived) {
+                audioService.playArrivalChime();
+              }
+              return {
+                ...car,
+                floor: nextFloor,
+                dir: arrived ? 'STATIONARY' : 'DOWN',
+                speed: arrived ? 0.0 : 2.5,
+                door: arrived ? 'OPEN' : 'CLOSED',
+                target: arrived ? null : car.target,
+                status: arrived ? 'IDLE' : 'RUNNING',
+                load: arrived ? Math.floor(Math.random() * 35 + 15) : car.load,
+              };
+            } else {
+              // Already at target floor
+              return {
+                ...car,
+                dir: 'STATIONARY',
+                speed: 0.0,
+                door: 'OPEN',
+                target: null,
+                status: 'IDLE',
               };
             }
           }
@@ -291,6 +296,67 @@ export default function ControlRoomGridPage() {
       )
     );
     setActionNotice(`${carCode} commanded to Phase 1 recall to Floor 1.`);
+    setTimeout(() => setActionNotice(null), 4000);
+  };
+
+  const handleDispatchFloor = (carId: string, carCode: string, targetFloor: number) => {
+    audioService.playCallRegistered();
+    setCars((prev) =>
+      prev.map((c) => {
+        if (c.id === carId) {
+          const dir = targetFloor > c.floor ? 'UP' : targetFloor < c.floor ? 'DOWN' : 'STATIONARY';
+          return {
+            ...c,
+            target: targetFloor,
+            dir,
+            speed: dir === 'STATIONARY' ? 0 : 2.5,
+            door: 'CLOSED',
+            status: 'RUNNING',
+          };
+        }
+        return c;
+      })
+    );
+    setActionNotice(`${carCode} dispatched to Floor ${formatFloorDisplay(targetFloor)}.`);
+    setTimeout(() => setActionNotice(null), 4000);
+  };
+
+  const handleSetCarStatus = (carId: string, carCode: string, newStatus: MonitoredCar['status']) => {
+    audioService.playCallRegistered();
+    setCars((prev) =>
+      prev.map((c) =>
+        c.id === carId
+          ? {
+              ...c,
+              status: newStatus,
+              speed: newStatus === 'FAULT' || newStatus === 'IDLE' ? 0 : c.speed,
+              dir: newStatus === 'FAULT' ? 'STATIONARY' : c.dir,
+            }
+          : c
+      )
+    );
+    setActionNotice(`${carCode} operational mode switched to ${newStatus}.`);
+    setTimeout(() => setActionNotice(null), 4000);
+  };
+
+  const handleToggleSafety = (carId: string, carCode: string) => {
+    audioService.playCallRegistered();
+    setCars((prev) =>
+      prev.map((c) => {
+        if (c.id === carId) {
+          const nextSafety = !c.safety;
+          return {
+            ...c,
+            safety: nextSafety,
+            status: nextSafety ? 'RUNNING' : 'FAULT',
+            speed: nextSafety ? c.speed : 0,
+            dir: nextSafety ? c.dir : 'STATIONARY',
+          };
+        }
+        return c;
+      })
+    );
+    setActionNotice(`${carCode} safety chain toggled.`);
     setTimeout(() => setActionNotice(null), 4000);
   };
 
@@ -440,19 +506,61 @@ export default function ControlRoomGridPage() {
                     </span>
                   </button>
 
-                  <div
-                    className={`sensor-tile ${!car.safety ? 'fault' : ''}`}
-                    title={`Safety Chain: ${car.safety ? 'Closed & Normal' : 'Open'}`}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSafety(car.id, car.code)}
+                    className={`sensor-tile ${!car.safety ? 'fault' : ''} cursor-pointer hover:border-[#15804D] transition-colors`}
+                    title={`Safety Chain: Click to toggle (Currently: ${car.safety ? 'Closed & Normal' : 'Open / Tripped'})`}
                   >
-                    <Lock className="h-5 w-5 text-[#15804D]" />
-                    <span className="text-[9px] font-medium mt-1 text-[#15804D]">
-                      Closed
+                    <Lock className={`h-5 w-5 ${car.safety ? 'text-[#15804D]' : 'text-[#C92D29]'}`} />
+                    <span className={`text-[9px] font-medium mt-1 ${car.safety ? 'text-[#15804D]' : 'text-[#C92D29]'}`}>
+                      {car.safety ? 'Closed' : 'Tripped'}
                     </span>
+                  </button>
+                </div>
+
+                {/* Direct Floor Dispatch Selector Bar */}
+                <div className="my-2.5 p-2 bg-[#EEF0F6]/80 rounded-[6px] border border-[#DCDFEA]">
+                  <div className="flex items-center justify-between text-[10px] font-mono font-bold text-[#5D6375] mb-1.5">
+                    <span>CALL CAR:</span>
+                    <span className="text-[#433690]">DISPATCH</span>
+                  </div>
+                  <div className="grid grid-cols-5 gap-1">
+                    {[1, 4, 8, 12, 14].map((fl) => (
+                      <button
+                        key={fl}
+                        type="button"
+                        onClick={() => handleDispatchFloor(car.id, car.code, fl)}
+                        className={`py-1 rounded text-[10px] font-mono font-bold transition-all border ${
+                          car.floor === fl
+                            ? 'bg-[#433690] text-white border-[#433690] shadow-xs'
+                            : car.target === fl
+                            ? 'bg-amber-100 text-amber-900 border-amber-400 animate-pulse'
+                            : 'bg-white hover:bg-[#E6E3F7] text-[#1E2232] border-[#DCDFEA]'
+                        }`}
+                        title={`Dispatch ${car.code} to Floor ${formatFloorDisplay(fl)}`}
+                      >
+                        {formatFloorDisplay(fl)}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 {/* Key/Value Telemetry Rows (label left, bold right) */}
                 <div className="space-y-1.5 text-xs font-mono divide-y divide-[#DCDFEA] pt-1">
+                  <div className="flex justify-between py-1.5 items-center">
+                    <span className="text-[#5D6375]">Mode:</span>
+                    <select
+                      value={car.status}
+                      onChange={(e) => handleSetCarStatus(car.id, car.code, e.target.value as any)}
+                      className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#DCDFEA] bg-[#EEF0F6] text-[#433690] focus:ring-1 focus:ring-[#433690]"
+                    >
+                      <option value="RUNNING">RUNNING (Auto)</option>
+                      <option value="IDLE">IDLE (Standby)</option>
+                      <option value="RECALL">RECALL (Lobby)</option>
+                      <option value="FAULT">FAULT (Lockout)</option>
+                    </select>
+                  </div>
                   <div className="flex justify-between py-1.5">
                     <span className="text-[#5D6375]">Load:</span>
                     <span className="font-bold text-[#1E2232]">{car.load}%</span>
